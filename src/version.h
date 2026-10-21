@@ -1,0 +1,4 @@
+#ifndef MK_TIMECLOCK_VERSION_H
+#define MK_TIMECLOCK_VERSION_H
+#define TIMECLOCK_VERSION "1.9.5-RC3-cleanup6"
+#endif

@@ -1,0 +1,299 @@
+/* mk-timeclock shared UI (v0.9.36).
+   Source of truth for all page styling. Run: make ui UI_VERSION=x.y.z
+   Rules enforced by tools/css_lint.py (run by the test suite):
+   - every font-size, border-radius, color and spacing value comes from a token below
+   - one rule per selector per context, one declaration per property per rule
+   - no data-page selectors here: the active-nav rules are generated from the nav table
+   - no double quotes or backslashes (the file is embedded as a C string) */
+
+/* 1. Tokens */
+:root{
+ --font:-apple-system,BlinkMacSystemFont,Segoe UI,Roboto,Noto Sans,Ubuntu,Cantarell,Helvetica Neue,Arial,sans-serif;
+ --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,Liberation Mono,monospace;
+ --fs-xs:12px;--fs-sm:13px;--fs-md:14px;--fs-base:15px;--fs-lg:16px;--fs-xl:22px;
+ --lh:1.5;--lh-tight:1.25;
+ --w-normal:400;--w-medium:600;--w-bold:700;
+ --s1:4px;--s2:8px;--s3:12px;--s4:16px;--s5:24px;--s6:48px;
+ --r-sm:6px;--r:8px;--r-pill:999px;
+ --control-h:40px;--control-h-sm:32px;--page-w:1100px;--bar-h:54px;
+ --bg:#f4f5f7;--surface:#ffffff;--text:#16202c;--muted:#5b6878;--line:#dde1e6;--hover:#eef1f4;
+ --accent:#1f4e79;--accent-ink:#ffffff;--focus:#2f6fb2;
+ --ok:#1d7a46;--warn:#9a6700;--err:#b42318;
+ --ok-bg:#e7f4ec;--warn-bg:#fdf3dc;--err-bg:#fdecea;
+ --shadow:0 8px 24px rgba(0,0,0,.12);
+ --oled-bg:#050505;--oled-bezel:#1f2937;--backdrop:rgba(0,0,0,.55);--login-w:440px;
+ color-scheme:light dark;
+}
+@media (prefers-color-scheme:dark){:root{
+ --bg:#0f1418;--surface:#171e24;--text:#e6ebf0;--muted:#94a1ae;--line:#2a343d;--hover:#1f2830;
+ --accent:#6aa7dc;--accent-ink:#0b1116;--focus:#8cc1ee;
+ --ok:#4cc38a;--warn:#e3b341;--err:#f47067;
+ --ok-bg:#15291d;--warn-bg:#2e2611;--err-bg:#351a19;
+ --shadow:0 8px 24px rgba(0,0,0,.45);
+}}
+
+/* 2. Cross-platform baseline (Mac, Windows, iPhone, Android) */
+*,*::before,*::after{box-sizing:border-box;scrollbar-width:thin;scrollbar-color:var(--line) transparent}
+html{-webkit-text-size-adjust:100%;text-size-adjust:100%;scrollbar-gutter:stable}
+body{margin:0;background:var(--bg);color:var(--text);font-family:var(--font);font-size:var(--fs-base);line-height:var(--lh);
+ -webkit-font-smoothing:antialiased;-moz-osx-font-smoothing:grayscale;text-rendering:optimizeLegibility}
+code,kbd,pre{font-family:var(--mono);font-size:var(--fs-sm)}
+a{color:var(--accent)}
+:focus{outline:none}
+:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+::-webkit-date-and-time-value{text-align:left}
+::-webkit-calendar-picker-indicator{opacity:.6;cursor:pointer}
+/* Element rules such as label{display:grid} would otherwise override the hidden attribute. */
+[hidden]{display:none}
+
+/* 3. Layout */
+main{max-width:var(--page-w);margin:0 auto;padding:var(--s5) var(--s4) var(--s6)}
+h1{font-size:var(--fs-xl);line-height:var(--lh-tight);font-weight:var(--w-bold);margin:0 0 var(--s1)}
+h1+p{color:var(--muted);margin:0 0 var(--s4)}
+h2{font-size:var(--fs-lg);line-height:var(--lh-tight);font-weight:var(--w-bold);margin:0 0 var(--s3)}
+h3{font-size:var(--fs-base);font-weight:var(--w-bold);margin:0 0 var(--s2)}
+p{margin:0 0 var(--s3)}
+section{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:var(--s5);margin:0 0 var(--s4);overflow-x:auto}
+section>:last-child,form>:last-child{margin-bottom:0}
+.muted{color:var(--muted);font-size:var(--fs-sm)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:var(--s3);margin:0 0 var(--s3)}
+.grid>label{margin:0}
+/* Every button or group of buttons sits in an .actions row. Spacing contract:
+   --s4 above the row, --s4 before whatever follows the row (or the form that holds it),
+   and the section padding below when the row is last. Empty status lines take no space. */
+.actions{display:flex;flex-wrap:wrap;align-items:center;gap:var(--s2) var(--s3);margin:var(--s4) 0 0}
+.actions+*,form+*{margin-top:var(--s4)}
+
+/* 4. Top bar and navigation (markup and active-item rules are generated) */
+.topbar{position:sticky;top:0;z-index:5;background:var(--surface);border-bottom:1px solid var(--line)}
+.topbar-in{max-width:var(--page-w);margin:0 auto;padding:0 var(--s4);display:flex;align-items:center;gap:var(--s3);min-height:var(--bar-h)}
+.brand{font-weight:var(--w-bold);color:var(--text);text-decoration:none;white-space:nowrap}
+.nav{display:flex;flex-wrap:wrap;align-items:center;gap:2px;flex:1}
+.nav a,.nav summary{display:block;padding:var(--s1) var(--s3);border-radius:var(--r-sm);color:var(--muted);text-decoration:none;white-space:nowrap;font-size:var(--fs-md);cursor:pointer;list-style:none}
+.nav a:hover,.nav summary:hover,.nav details[open]>summary{background:var(--hover);color:var(--text)}
+.nav summary::-webkit-details-marker{display:none}
+.nav summary::after{content:'';display:inline-block;width:5px;height:5px;margin:0 0 2px var(--s2);border:solid currentColor;border-width:0 1.5px 1.5px 0;transform:rotate(45deg)}
+.nav details{position:relative}
+.nav details>div{position:absolute;top:calc(100% + var(--s1));left:0;z-index:6;min-width:190px;display:grid;padding:var(--s1);background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+/* The generator appends one selector per nav entry to this rule. */
+.nav .active{background:var(--hover);color:var(--accent);font-weight:var(--w-medium)}
+.signout{margin:0}
+
+/* 5. Forms */
+label{display:grid;gap:var(--s1);margin:var(--s3) 0;font-size:var(--fs-sm);font-weight:var(--w-medium);color:var(--muted)}
+label:has(>input[type=checkbox]){display:inline-flex;align-items:center;vertical-align:top;gap:var(--s2);margin:0 var(--s4) 0 0;font-size:var(--fs-base);font-weight:var(--w-normal);color:var(--text)}
+/* 16px text in fields stops iPhone Safari from zooming in on focus. appearance:none removes the different Mac and Windows native looks. */
+input,select,textarea{font-family:inherit;font-size:var(--fs-lg);margin:0;-webkit-appearance:none;appearance:none;width:100%;padding:var(--s2) var(--s3);color:var(--text);background-color:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);font-weight:var(--w-normal)}
+input,select{min-height:var(--control-h);line-height:var(--lh-tight)}
+input:focus,select:focus,textarea:focus{border-color:var(--focus)}
+input::placeholder,textarea::placeholder{color:var(--muted);opacity:1}
+select{padding-right:calc(var(--s5) + var(--s3));background-image:linear-gradient(45deg,transparent 50%,currentColor 50%),linear-gradient(135deg,currentColor 50%,transparent 50%);
+ background-position:calc(100% - 18px) 52%,calc(100% - 13px) 52%;background-size:5px 5px;background-repeat:no-repeat;cursor:pointer}
+input[type=checkbox]{-webkit-appearance:auto;appearance:auto;width:18px;height:18px;min-height:0;padding:0;flex:none;accent-color:var(--accent)}
+textarea{min-height:140px;resize:vertical;line-height:var(--lh)}
+button{font-family:inherit;font-size:var(--fs-base);line-height:var(--lh-tight);margin:0;-webkit-appearance:none;appearance:none;-webkit-tap-highlight-color:transparent;min-height:var(--control-h);padding:0 var(--s4);border:1px solid transparent;border-radius:var(--r-sm);background:var(--accent);color:var(--accent-ink);font-weight:var(--w-medium);cursor:pointer;touch-action:manipulation}
+button:hover{filter:brightness(1.08)}
+button:disabled{opacity:.5;cursor:not-allowed;filter:none}
+button[type=button],button.secondary{background:transparent;color:var(--text);border-color:var(--line)}
+button[type=button]:hover,button.secondary:hover{background:var(--hover);filter:none}
+button.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent}
+button.primary:hover{background:var(--accent);filter:brightness(1.08)}
+
+/* 6. Tables */
+/* Tabular figures keep timestamps and UIDs aligned in columns on every platform. */
+table{width:100%;border-collapse:collapse;font-size:var(--fs-md);font-variant-numeric:tabular-nums}
+th{white-space:nowrap;text-align:left;font-size:var(--fs-xs);font-weight:var(--w-medium);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);padding:var(--s2) var(--s3);border-bottom:1px solid var(--line)}
+td{padding:var(--s2) var(--s3);border-bottom:1px solid var(--line);vertical-align:middle}
+/* Compact buttons inside table rows, centred with the row text. */
+td>button{min-height:var(--control-h-sm);padding:0 var(--s3)}
+tr:last-child td{border-bottom:0}
+tr:hover td{background:var(--hover)}
+/* Flagged rows: tint plus a left bar, so the flag survives grayscale printing. */
+tr.row-problem>td,tr.row-problem>th{background:var(--err-bg)}
+tr.row-check>td,tr.row-check>th{background:var(--warn-bg)}
+tr.row-problem>:first-child{box-shadow:inset 4px 0 0 var(--err)}
+tr.row-check>:first-child{box-shadow:inset 4px 0 0 var(--warn)}
+
+/* 7. Status and feedback */
+/* :where() keeps these at class weight so .is-err and .is-ok below can override them. */
+:where(#status,#message,#result,#state,p[role=status]):empty{display:none}
+:where(#status,#message,#result,#state,p[role=status]):not(:empty){padding:var(--s2) var(--s3);border-left:3px solid var(--accent);background:var(--hover);border-radius:var(--r-sm);color:var(--text)}
+.pill{display:inline-block;padding:1px var(--s2);border-radius:var(--r-pill);font-size:var(--fs-xs);font-weight:var(--w-medium);border:1px solid currentColor}
+.ok{color:var(--ok)}
+.warn{color:var(--warn)}
+.err{color:var(--err)}
+/* Issue flags. Every flag carries a word, never color alone. Levels: problem (red), check (amber), ok (green), muted (grey). */
+.flag{display:inline-block;padding:0 var(--s2);border-radius:var(--r-pill);font-size:var(--fs-xs);font-weight:var(--w-bold);line-height:var(--lh);border:1px solid currentColor;white-space:nowrap;vertical-align:baseline}
+.flag+.flag{margin-left:var(--s1)}
+.flag-problem{color:var(--err);background:var(--err-bg)}
+.flag-check{color:var(--warn);background:var(--warn-bg)}
+.flag-ok{color:var(--ok);background:var(--ok-bg)}
+.flag-muted{color:var(--muted);background:var(--hover)}
+/* Status messages: tc.err() and tc.ok() set these; any later text change clears them. */
+.is-err:not(:empty){display:block;padding:var(--s2) var(--s3);border-left:4px solid var(--err);background:var(--err-bg);border-radius:var(--r-sm);color:var(--text)}
+.is-ok:not(:empty){display:block;padding:var(--s2) var(--s3);border-left:4px solid var(--ok);background:var(--ok-bg);border-radius:var(--r-sm);color:var(--text)}
+.is-err::before,.is-ok::before{display:inline-block;margin-right:var(--s2);padding:0 var(--s2);border-radius:var(--r-pill);font-size:var(--fs-xs);font-weight:var(--w-bold);border:1px solid currentColor}
+.is-err::before{content:'Error';color:var(--err)}
+.is-ok::before{content:'Done';color:var(--ok)}
+/* Page-level issue banner. */
+.banner{margin:0 0 var(--s4);padding:var(--s3) var(--s4);border:1px solid currentColor;border-left-width:4px;border-radius:var(--r);font-weight:var(--w-medium)}
+.banner-problem{color:var(--err);background:var(--err-bg)}
+.banner-check{color:var(--warn);background:var(--warn-bg)}
+.banner>.flag{margin-right:var(--s2)}
+.banner>span:not(.flag){color:var(--text)}
+/* Issue counts on the menu. */
+.count{display:inline-block;min-width:18px;margin-left:var(--s1);padding:0 var(--s1);border-radius:var(--r-pill);background:var(--err);color:var(--accent-ink);font-size:var(--fs-xs);font-weight:var(--w-bold);line-height:var(--lh);text-align:center}
+.awaiting::before{content:'';display:inline-block;width:9px;height:9px;margin-right:var(--s2);border-radius:50%;background:var(--warn);animation:tc-pulse 1.2s ease-in-out infinite}
+@keyframes tc-pulse{50%{opacity:.25}}
+
+/* 8. Page specifics */
+body.login main{max-width:var(--login-w);margin:var(--s5) auto 0}
+/* Card heading with its action buttons on the right (Employees, employee dialog). */
+.section-head{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:var(--s3);margin:0 0 var(--s3)}
+.section-head h2{margin:0}
+.section-head .actions{margin:0}
+/* Sub-headings inside a long form get room above them. */
+form>h2{margin-top:var(--s5)}
+form>h2:first-child{margin-top:0}
+/* Employee swipe-note page: label column hugs its text, values wrap on phones. */
+.swipe-detail th{width:1%;white-space:nowrap}
+.swipe-detail tr:last-child th{border-bottom:0}
+body.login form{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:var(--s5)}
+
+/* 9. Responsive, motion, print */
+@media (max-width:700px){
+ .topbar-in{flex-wrap:wrap;gap:var(--s1) var(--s3);padding:var(--s2) var(--s4)}
+ .nav{order:3;flex-basis:100%;margin:0 calc(-1 * var(--s2));justify-content:space-between;position:relative}
+ .nav a,.nav summary{padding:var(--s1);font-size:var(--fs-sm)}
+ .nav summary::after{margin-left:var(--s1)}
+ /* Phone: an open menu becomes a full-width panel under the whole nav, so it never runs off
+    the right edge or covers a menu button that wrapped to a second row. */
+ .nav details{position:static}
+ .nav details>div{right:0;min-width:0}
+ .nav details>div a{padding:var(--s2) var(--s3);font-size:var(--fs-base)}
+ .signout{margin-left:auto}
+ main{padding-top:var(--s4)}
+ section{padding:var(--s4)}
+ label:has(>input[type=checkbox]){display:flex;margin:var(--s2) 0}
+}
+@media (prefers-reduced-motion:reduce){.awaiting::before{animation:none}}
+@media print{
+ :root{--bg:#ffffff;--surface:#ffffff;--text:#000000;--line:#cccccc}
+ .topbar{display:none}
+ section{border:0;padding:0}
+ .flag,.count,.banner,.is-err,.is-ok,tr.row-problem>*,tr.row-check>*{-webkit-print-color-adjust:exact;print-color-adjust:exact}
+}
+
+
+/* Punch editing and compact layouts */
+dialog{border:1px solid var(--line);border-radius:var(--r);padding:var(--s5);max-width:520px;width:94vw;background:var(--surface);color:var(--text)}
+dialog::backdrop{background:var(--backdrop)}
+dialog form{display:grid;gap:var(--s3)}
+dialog form .actions{justify-content:flex-end}
+@media (max-width:600px){
+.punch-review thead{display:none}
+.punch-review,.punch-review tbody,.punch-review tr,.punch-review td{display:block;width:100%}
+.punch-review tr{border:1px solid var(--line);border-radius:var(--r);margin-bottom:var(--s3);padding:var(--s3)}
+.punch-review td{padding:var(--s1) 0;border:0}
+.punch-review td:last-child{display:flex;gap:var(--s2)}
+}
+
+/* Diagnostics: shared design tokens and standard manager panels. */
+.diag-toolbar{align-items:center;justify-content:space-between;margin-bottom:var(--s4);flex-wrap:wrap}
+.diag-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(min(100%,420px),1fr));gap:var(--s4)}
+.diag-panel{margin:0}
+/* Diagnostics rows must have continuous separators, including their final row.
+   Separate borders avoid collapsed-border conflicts with global table styling
+   (especially in Safari). */
+.diag-table{border-collapse:separate;border-spacing:0;table-layout:fixed}
+.diag-table tr>th,.diag-table tr>td{border-bottom:1px solid var(--line)}
+.diag-table tr:last-child>th,.diag-table tr:last-child>td{border-bottom:1px solid var(--line)}
+.diag-table th{width:48%;font-size:var(--fs-sm);text-transform:none;letter-spacing:normal;font-weight:var(--w-medium);color:var(--muted);vertical-align:top;white-space:normal}
+.diag-table td{font-size:var(--fs-sm);overflow-wrap:anywhere;white-space:normal}
+@media (max-width:700px){.diag-grid{grid-template-columns:minmax(0,1fr)}}
+
+/* Live service activity, shared diagnostics styles. */
+.diag-log-section{margin-top:var(--s4)}
+.diag-log{max-height:430px;min-height:190px;overflow:auto;white-space:pre-wrap;overflow-wrap:anywhere;padding:var(--s3);border:1px solid var(--line);border-radius:var(--r);background:var(--bg);color:var(--text);font-size:var(--fs-sm);line-height:var(--lh)}
+.diag-auto{display:inline-flex;align-items:center;gap:var(--s2);font-size:var(--fs-sm)}
+.diag-auto input{width:auto;margin:0}
+
+/* 0.9.94: actionable rows, consistent status spacing and accessible clock actions. */
+.employee-selectable{cursor:pointer}
+.employee-selectable:focus-visible{outline:2px solid var(--focus);outline-offset:2px}
+.clock-entry{display:flex;align-items:center;justify-content:space-between;gap:var(--s3);flex-wrap:wrap;border-bottom:1px solid var(--line);padding:var(--s2) 0}
+.clock-entry .actions{margin:0}
+.after-table{margin-top:var(--s3)}
+input::file-selector-button{background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);padding:var(--s2) var(--s3);font-family:inherit;cursor:pointer}
+.actions a,.brand{display:inline-flex;align-items:center;min-height:var(--control-h-sm)}
+@media (max-width:700px){.clock-entry{align-items:flex-start}.clock-entry .actions{width:100%}}
+
+/* v0.9.95: phone-first administrative tables with field labels. */
+@media (max-width:600px){
+ .mobile-queue,.mobile-uploads,.mobile-queue tbody,.mobile-uploads tbody,.mobile-queue tr,.mobile-uploads tr{display:block;width:100%}
+ .mobile-queue thead,.mobile-uploads thead{display:none}
+ .mobile-queue tr,.mobile-uploads tr{border:1px solid var(--line);border-radius:var(--r);padding:var(--s3);margin-bottom:var(--s3);background:var(--surface)}
+ .mobile-queue td,.mobile-uploads td{display:grid;width:100%;grid-template-columns:minmax(92px,33%) minmax(0,1fr);gap:var(--s2);padding:var(--s2) 0;border:0;overflow-wrap:anywhere}
+ .mobile-queue td::before,.mobile-uploads td::before{content:attr(data-label);font-weight:var(--w-medium);color:var(--muted)}
+ .mobile-queue td:nth-child(4){font-weight:var(--w-bold)}
+ .mobile-queue td:nth-child(7),.mobile-uploads td:nth-child(6){word-break:break-word}
+}
+/* Consistent separation of results, controls and tables. */
+section>table+*,section>.after-table,section>form+table,section>.actions+table{margin-top:var(--s3)}
+section>p[role=status],section>p[id$=Status]{margin-top:var(--s3)}
+section select{min-width:0;max-width:100%;text-overflow:ellipsis}
+
+/* Employee editor and compact Today display. */
+#employeeDialog{max-width:760px;width:min(94vw,760px);max-height:90vh;overflow-y:auto}
+#employeeDialog .actions{justify-content:flex-start}
+.today-preview{display:flex;align-items:flex-start;gap:var(--s5);max-width:100%;width:fit-content}
+.today-preview canvas{display:block;width:256px;height:128px;box-sizing:content-box;image-rendering:pixelated;background:var(--oled-bg);border:8px solid var(--oled-bezel);border-radius:var(--r)}
+.today-preview-meta{display:flex;flex-direction:column;gap:var(--s2);min-width:165px}
+@media (max-width:520px){.today-preview{flex-wrap:wrap}.today-preview canvas{width:224px;height:112px}}
+
+
+/* Employee pay reviews remain stacked on narrow screens. */
+@media(max-width:600px){
+ .swipe-detail td{white-space:normal}
+}
+/* Preserve global OLED framebuffer preview sizing. */
+
+/* Shared layout: fields cannot expand beyond a narrow card. */
+form{min-width:0;max-width:100%}
+form input:not([type=checkbox]),form select{min-width:0;max-width:100%;box-sizing:border-box}
+
+/* r47: permit long names and small-screen forms without horizontal viewport overflow. */
+@media(max-width:600px){
+ main,main>section{min-width:0;max-width:100%}
+ section{overflow-x:auto;overscroll-behavior-x:contain}
+ table{min-width:0}
+ table th,table td{overflow-wrap:normal;word-break:normal}
+ table button{white-space:nowrap;overflow-wrap:normal;word-break:normal}
+ form .actions{flex-wrap:wrap}
+ form .actions button{max-width:100%;white-space:normal}
+}
+
+/* Employee time-off portal: use a full reading width, with status always visible. */
+body.login.timeoff-employee main{max-width:var(--page-w)}
+body.login.timeoff-employee section form,body.login.timeoff-public section form{border:0;padding:0;background:transparent}
+.timeoff-history{display:grid;gap:var(--s3)}
+.timeoff-history-item{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:var(--s4);min-width:0;overflow-wrap:break-word}
+.timeoff-history-head{display:flex;align-items:center;gap:var(--s3);flex-wrap:wrap}
+.timeoff-history-item p{margin:var(--s2) 0 0}
+
+/* Employee review: fit daily summaries at desktop widths. */
+body.login.review-employee main{max-width:var(--page-w)}
+body.login.review-employee table td{overflow-wrap:normal;word-break:normal}
+@media(max-width:600px){body.login.review-employee table{width:100%;display:block;overflow-x:auto;max-width:100%}body.login.review-employee table th,body.login.review-employee table td{padding:var(--s2)}body.login.review-employee table th:first-child,body.login.review-employee table td:first-child{white-space:nowrap;overflow-wrap:normal;word-break:normal}}
+
+.clocks-table td{white-space:nowrap}
+
+/* Period and clock tables scroll on narrow screens rather than wrapping dates or actions. */
+.periods-table td,.periods-table button{white-space:nowrap}
+
+/* Recorded absences: horizontal scroll on phones, with readable dates and actions. */
+.table-scroll,.table-wrap,.timeoff-table-scroll{max-width:100%;overflow-x:auto;overscroll-behavior-x:contain}
+.timeoff-table-scroll td:nth-child(2){white-space:nowrap}
+.absences-table{min-width:760px}
+.absences-table td:not(:nth-child(5)),.absences-table th,.absences-table button{white-space:nowrap;overflow-wrap:normal;word-break:normal}
+.absences-table td:nth-child(5){min-width:140px;overflow-wrap:break-word}
