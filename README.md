@@ -2,7 +2,7 @@
 
 RFID attendance recording, employee time-off requests, and payroll reporting for the **Banana Pi BPI-M2 Zero**.
 
-Developed by **iCube Development (Calgary) Ltd.** The clock combines an RC522 reader, a 128 × 64 OLED, audible swipe feedback, and a browser-based manager interface. A single device can operate as the Primary, or additional Slave clocks can send attendance to it.
+Developed by **iCube Development (Calgary) Ltd.** The clock combines an RC522 reader, a 128 × 64 OLED, audible swipe feedback, and a browser-based manager interface. A single device can operate as the Primary, or additional Secondary clocks can send attendance to it.
 
 **Attendance rules:** IN starts recorded elapsed time; OUT ends it. Missing punches are flagged. The application does not invent an OUT, deduct breaks, calculate overtime pay, or decide which hours are payable.
 
@@ -58,6 +58,16 @@ This README describes **1.9.5-RC3-cleanup6**. The release contains source code a
 
 **Touch input is not implemented in this release.** A TTP223 module is not required and has no assigned connection in the current agent.
 
+## Build and install overview
+
+Use the **Timeclock Build and Install Guide** for the illustrated assembly sequence. This README provides the matching wiring reference, software commands, features, and maintenance details.
+
+1. **Build:** print case v8.34, solder right-angle headers, convert the OLED to I²C, mount the components, then connect and check all 14 wires with power disconnected.
+2. **Software:** write the bpi-zero-wbuild 3.13 image, configure Wi-Fi and SSH access, start the clock, copy the software, then install the chosen role.
+3. **Finish:** create the first manager, test the display and cards, close the case, and mount it.
+
+**Primary** is the first or only clock and hosts the database and management website. **Secondary** means an additional reader clock. The source, service messages, and installer filename use the term `slave` for this role.
+
 ## Hardware and operating system
 
 | Component | Project setup |
@@ -65,11 +75,11 @@ This README describes **1.9.5-RC3-cleanup6**. The release contains source code a
 | Computer | Banana Pi BPI-M2 Zero |
 | Operating system | Project-prepared 32-bit Debian/Armbian-based image with systemd and apt |
 | Reader | RC522 / MFRC522 SPI module; compatible 13.56 MHz cards or fobs |
-| Display | 128 × 64 I²C OLED using the included driver; project setup uses SSD1309 |
+| Display | 2.42-inch SSD1309 OLED, 128 × 64, seven-pin PCB converted to I²C as described below |
 | Audible feedback | Supported active buzzer or a 3.3 V-compatible buzzer driver |
 | Storage | microSD with space for SQLite data, exports, and backups |
 | Power | Stable board power supply; the manufacturer's board specification lists 5 V / 2 A |
-| Network | Network access for management, time synchronization, SMTP, and Primary/Slave communication |
+| Network | Network access for management, time synchronization, SMTP, and Primary/Secondary communication |
 
 The installer currently requires:
 
@@ -79,6 +89,21 @@ The installer currently requires:
 - Linux GPIO character-device v2 support, used by the buzzer code.
 
 A generic Debian or Armbian image is not automatically a supported installation. Enable the required interfaces using the image's configuration tools before installation. Do not create the marker file merely to bypass the platform check.
+
+### Case and assembly
+
+The illustrated build uses **case v8.34**, right-angle 2.54 mm headers, 14 female-to-female jumper wires, a stick-on IPEX/u.FL Wi-Fi antenna, a two-wire active buzzer with mounting ears, and a USB-C power breakout.
+
+| Fasteners | Quantity | Component |
+| --- | ---: | --- |
+| M2 × 5 mm self-tapping | 8 | OLED and RC522, four each |
+| M2 × 6 mm self-tapping | 6 | BPI, four; USB-C board, two |
+| M2 × 8 mm self-tapping | 2 | Buzzer ears |
+| M3 × 12 mm countersunk self-tapping | 4 | Rear cover |
+
+Print the OLED fit-test piece before the front and rear cover. The guide specifies a 0.4 mm nozzle, 0.24 mm layers, three walls, 20% infill, no supports, and PETG or PLA. Keep the supplied print orientation. Tighten self-tapping screws gently.
+
+Use right-angle headers so the cover can close. The OLED header points inward over the PCB. Mount its glass from inside using the four internal M2 × 5 mm fasteners. Keep wires clear of the display ribbon and cover rim. Leave the cover off until testing is complete.
 
 ## Pinouts and wiring
 
@@ -91,17 +116,17 @@ Board mapping reference: [Banana Pi BPI-M2 Zero manufacturer pinout](https://wik
 | RC522 label | Physical pin | BPI signal |
 | --- | ---: | --- |
 | 3.3V | 17 | 3.3 V |
-| GND | 6 | Ground |
+| GND | 20 | Ground |
 | SDA / SS / NSS | 24 | PC3, SPI0 chip select |
 | SCK | 23 | PC2, SPI0 clock |
 | MOSI | 19 | PC0, SPI0 MOSI |
 | MISO | 21 | PC1, SPI0 MISO |
-| RST | 17 | Hold high at 3.3 V |
+| RST | Not connected | As assembled in the illustrated build |
 | IRQ | Not connected | Unused |
 
 **The RC522 pin labelled SDA is required. In SPI mode it is chip select, not I²C SDA.** Connect it to pin 24, not pin 3.
 
-The driver uses `/dev/spidev0.0` at 250 kHz and performs reader reset over SPI. It does not drive a separate reset GPIO; the reader's reset/power-down input must remain high. Use 3.3 V power and logic for this connection. See the [NXP MFRC522 datasheet](https://www.nxp.com/docs/en/data-sheet/MFRC522.pdf) for electrical and reset details.
+The illustrated build leaves both RC522 IRQ and RST unconnected. The driver uses `/dev/spidev0.0` at 250 kHz, performs reader reset over SPI, and does not drive a reset GPIO. The module must hold its reset/power-down input high through its onboard circuitry; an unconnected terminal is not a general instruction to leave the chip input floating. If using a different module, verify its reset circuit. Use 3.3 V power and logic. See the [NXP MFRC522 datasheet](https://www.nxp.com/docs/en/data-sheet/MFRC522.pdf) for electrical and reset details.
 
 ### OLED: I²C0
 
@@ -127,7 +152,7 @@ For the project's 2.42-inch SSD1309 PCB, convert SPI to I²C as follows:
 
 These component labels apply to this particular OLED PCB, not every SSD1309 module. The converted display was detected at `0x3c` on `/dev/i2c-0`.
 
-**The OLED RES/RST connection was considered but never fitted. Leave it unconnected in this build; do not wire it to 3.3 V or a GPIO.** The RC522 RST connection above is separate and remains tied to 3.3 V.
+**The OLED RES/RST connection was considered but never fitted. Leave it unconnected in this build; do not wire it to 3.3 V or a GPIO.** The illustrated build also leaves the separate RC522 RST terminal unconnected, as described above.
 
 Default device: `/dev/i2c-0`. Default address: `0x3c`. Confirm the module's controller, supply requirements, connector order, and address before connection; OLED modules do not all have the same pin order.
 
@@ -139,6 +164,22 @@ Default device: `/dev/i2c-0`. Default address: `0x3c`. Confirm the module's cont
 | Ground | 6 | Common ground |
 
 Use an active buzzer arrangement compatible with the GPIO, or a suitable transistor driver with the buzzer powered according to its rating. Do not use the GPIO as a general-purpose buzzer power supply. Set `BUZZER_OFFSET=none` to disable audible feedback.
+
+### USB-C power input
+
+| USB-C breakout label | Physical pin | BPI signal |
+| --- | ---: | --- |
+| V / VBUS | 2 | 5 V input |
+| G / GND | 39 | Ground |
+| D+ and D− | Not connected | Data terminals unused |
+
+The guide uses a **5 V, 2 A or greater USB-A charger and USB-A-to-USB-C cable**. The breakout supplies power only. Do not use a higher-voltage PD trigger. A USB-C-to-C supply requires a breakout with the appropriate CC pull-down resistors.
+
+### Wiring checklist
+
+The illustrated build uses **14 jumper wires**: six RC522, four OLED, two buzzer, and two USB-C power wires. No Y-splice is fitted. OLED RES/DC/CS and RC522 IRQ/RST remain unconnected.
+
+Before applying power, check pin 2 goes only to USB-C V, RC522 power goes to pin 17, OLED power goes to pin 1, and buzzer red/positive goes to pin 7 with black/negative on pin 6. This direct buzzer wiring applies to the compatible buzzer used in the guide. Check every plug is fully seated on one pin, with no shorts or pinched wires.
 
 ### Verify interfaces
 
@@ -156,7 +197,41 @@ Bus numbers and GPIO line offsets can differ on another image. Header position, 
 
 ### 1. Prepare the clock
 
-Boot the supported image, configure networking, confirm SSH access, and enable the required SPI/I²C interfaces. Clone this repository or extract the complete source release onto the clock.
+Use the prepared [bpi-zero-wbuild 3.13 image](https://github.com/mkinderwater/bpi-zero-wbuild/releases/tag/3.13), `bpi-zero-wbuild-3.13-trixie-minimal-hw-bpi-m2-zero.img.gz`. Write it directly to a microSD card of at least 16 GB with balenaEtcher. Writing the image erases the selected card. Cancel any Windows prompt to format it afterward.
+
+Reinsert the card and open `CONFIG.TXT` on the `BPIWBUILD` volume. Set the six configuration lines using your own values:
+
+```ini
+SSID=OfficeWiFi
+PSK=wifi-password-here
+COUNTRY=CA
+HIDDEN=false
+TIMEZONE=America/Edmonton
+ROOT_PASSWORD=Choose-A-Strong-Password-26
+```
+
+Use a 2.4 GHz Wi-Fi network. Follow the image's configuration notes for allowed values. Keep the root password safe; the image removes it from the configuration file after setup. Eject the card, insert it into the BPI, and apply power only after checking the wiring. Allow about ten minutes for first boot. The OLED remains blank until the timeclock software runs.
+
+Find the address in the router's device list and reserve it. Connect from Terminal or PowerShell:
+
+```bash
+ssh root@192.168.1.50
+cat /etc/bpi-zero-wbuild-release
+```
+
+Replace the example IP with the clock's address. The image marker should identify `3.13-trixie-minimal-hw`. The SSH root password is separate from the manager account created later.
+
+Copy `mk-timeclock-lite-RC3-cleanup6.zip` to `/root` using SFTP/WinSCP or `scp`, then run on the clock:
+
+```bash
+sudo apt-get update
+sudo apt-get install -y unzip python3
+cd /root
+unzip mk-timeclock-lite-RC3-cleanup6.zip
+cd mk-timeclock-lite-RC3-cleanup6
+```
+
+These commands match the guide's cleanup6 source archive. If using a different release, use its actual archive and extracted directory names. The prepared image must expose the SPI, I²C, and GPIO devices listed above.
 
 Run commands from the source directory. If an archive or download has lost executable permissions:
 
@@ -184,7 +259,7 @@ The installer checks the platform, installs missing dependencies, builds the thr
 
 The Primary and Slave wrappers use the same shared installer. **Bare `sudo ./install.sh` does not install anything:** it requires a role argument. The explicit equivalents are `sudo ./install.sh --master` and `sudo ./install.sh --slave`.
 
-Do not run both role installers on one device. The installer refuses conflicting existing roles and refuses a Slave installation over an existing Primary database.
+Do not run both role installers on one device. The installer refuses conflicting existing roles and refuses a Secondary installation over an existing Primary database.
 
 ### 4. Open the management page
 
@@ -221,15 +296,15 @@ Use `YYYY-MM-DD` dates and simple holiday names without commas. Import stages ch
 
 ## Additional clocks
 
-The **Primary** owns the authoritative attendance database and hosts manager administration. Each **Slave** reads cards, maintains its local queue, and uploads attendance to the Primary.
+The **Primary** owns the authoritative attendance database and hosts manager administration. Each **Secondary** reads cards, maintains its local queue, and uploads attendance to the Primary.
 
-Install an additional clock with:
+Install an Secondary clock with:
 
 ```bash
 sudo ./install-slave.sh
 ```
 
-For an unadopted Slave:
+For an unadopted Secondary:
 
 1. Install a trusted HTTPS certificate on the Primary.
 2. Generate an adoption code under the Primary's **Clock management** page.
@@ -238,7 +313,13 @@ For an unadopted Slave:
 5. Approve the pending request on the Primary using its manager authorization workflow.
 6. Check approval on the Slave to complete adoption and start attendance recording.
 
-Keep device credentials private and unique. A Slave is not an automatic failover Primary, and its queue is not a replica of the full payroll database. Backups are local to each clock; there is no backup synchronization between clocks.
+Keep device credentials private and unique. A Secondary is not an automatic failover Primary, and its queue is not a replica of the full payroll database. Backups are local to each clock; there is no backup synchronization between clocks.
+
+### Test and finish assembly
+
+Before closing the case, confirm the display shows the date, time, and card prompt. Test the manager card for manager feedback and the unregistered kit card for rejection. If the clock reports **CLOCK NOT SYNCED**, resolve time synchronization before testing attendance.
+
+Unplug power, check that no wire is trapped, then fit the rear cover with four M3 × 12 mm countersunk screws. For wall mounting, use the guide's drilling template at **100% / Actual size** and verify its 80 mm reference with a ruler. Keep the clock away from large metal surfaces. Reconnect power and confirm the card prompt returns.
 
 ## Payroll and vacation reporting
 
@@ -292,7 +373,7 @@ Use **Backup and restore** for local backup creation, authorized downloads, and 
 - Optional scheduled email sends the archive to a selected active manager. SMTP None, STARTTLS, and SSL/TLS use the shared outgoing-mail configuration.
 - Backup email is disabled by default and rejects archives above **15 MiB**. A mail failure does not invalidate the local archive.
 - Manager GUI download and restore actions require the applicable manager-card authorization. Restore also requires explicit confirmation.
-- A Slave installation does not automatically enable the Primary's backup timer.
+- A Secondary installation does not automatically enable the Primary's backup timer.
 
 Local commands:
 
@@ -354,7 +435,7 @@ Role determines which services run. Keep the loopback backend private and use tr
 
 | Symptom | Check |
 | --- | --- |
-| Installer exits immediately | Use the Primary/Slave wrapper; check image marker, architecture, and device nodes |
+| Installer exits immediately | Use the Primary/Secondary wrapper; check image marker, architecture, and device nodes |
 | Cannot reach the GUI | Check the clock IP, nginx, and server service logs |
 | Login rejected after reinstall | Existing accounts/passwords are preserved; reinstalling does not reset them |
 | Card scans refused with time warning | Check NTP synchronization and network access; changing timezone does not synchronize the clock |
