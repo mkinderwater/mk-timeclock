@@ -1,0 +1,28 @@
+{
+  "release": "1.9.5-RC3-cleanup5",
+  "base": "1.9.5-RC3-cleanup4",
+  "checks": [
+    {
+      "name": "CSS lint",
+      "passed": true
+    },
+    {
+      "name": "test_rc3_mobile_browser.py",
+      "passed": true,
+      "includes": [
+        "standard submit-button computed CSS",
+        "real Vacation_2026.csv download",
+        "CSV response content",
+        "existing phone and workflow browser acceptance"
+      ]
+    },
+    {
+      "name": "test_rc1_inline_js.py",
+      "passed": true,
+      "scripts": 99,
+      "served_pages": 35
+    }
+  ],
+  "full_suite_rerun": false,
+  "database_changes": false
+}

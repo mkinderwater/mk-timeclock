@@ -1,0 +1,11 @@
+[Unit]
+Description=Validate and install timeclock HTTPS certificate
+After=network.target
+[Service]
+Type=oneshot
+User=root
+Group=root
+ExecStart=/opt/icubedev-timeclock/bin/timeclock-tls-apply.sh
+NoNewPrivileges=true
+ProtectHome=true
+PrivateTmp=true

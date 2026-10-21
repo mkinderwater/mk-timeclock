@@ -1,0 +1,7 @@
+[Unit]
+Description=Watch authorized timeclock system actions
+[Path]
+PathExists=/var/lib/timeclock/system-action.request
+Unit=timeclock-system-action.service
+[Install]
+WantedBy=multi-user.target

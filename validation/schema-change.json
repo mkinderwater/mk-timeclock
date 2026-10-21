@@ -1,0 +1,8 @@
+{
+  "release": "1.9.5-RC3-cleanup6",
+  "base": "1.9.5-RC3-cleanup5",
+  "added_columns": {},
+  "added_tables": [],
+  "removed_tables": [],
+  "change": "Employee vacation allowance field alignment; no database changes."
+}

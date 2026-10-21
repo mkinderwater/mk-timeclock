@@ -1,0 +1,5 @@
+[Unit]
+Description=Validate and import a staged timeclock backup
+[Service]
+Type=oneshot
+ExecStart=/opt/icubedev-timeclock/bin/timeclock-backup-upload.py

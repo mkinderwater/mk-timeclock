@@ -1,0 +1,7 @@
+[Unit]
+Description=Watch timeclock NTP change requests
+[Path]
+PathExists=/var/lib/timeclock/ntp.request
+Unit=timeclock-ntp-apply.service
+[Install]
+WantedBy=multi-user.target

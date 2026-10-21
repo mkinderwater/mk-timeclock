@@ -1,0 +1,5 @@
+[Unit]
+Description=Execute restricted timeclock system action
+[Service]
+Type=oneshot
+ExecStart=/opt/icubedev-timeclock/bin/timeclock-system-action.sh

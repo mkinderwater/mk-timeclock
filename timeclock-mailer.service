@@ -1,0 +1,19 @@
+[Unit]
+Description=mk-timeclock SMTP Delivery
+After=timeclock-server.service network-online.target
+Wants=network-online.target
+[Service]
+Type=simple
+User=timeclock
+Group=timeclock
+ExecStart=/opt/icubedev-timeclock/bin/run-mailer.sh
+Restart=on-failure
+RestartSec=15
+UMask=0077
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/timeclock
+ProtectHome=true
+PrivateTmp=true
+[Install]
+WantedBy=multi-user.target

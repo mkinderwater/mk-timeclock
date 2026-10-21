@@ -1,0 +1,19 @@
+[Unit]
+Description=mk-timeclock Unified RFID and OLED Agent
+After=systemd-timesyncd.service
+Wants=systemd-timesyncd.service
+[Service]
+Type=simple
+User=root
+WorkingDirectory=/var/lib/timeclock
+ExecStart=/opt/icubedev-timeclock/bin/run-agent.sh
+Restart=always
+RestartSec=5
+UMask=0077
+NoNewPrivileges=true
+ProtectHome=true
+PrivateTmp=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/timeclock
+[Install]
+WantedBy=multi-user.target

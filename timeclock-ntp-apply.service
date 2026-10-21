@@ -1,0 +1,5 @@
+[Unit]
+Description=Apply validated timeclock NTP configuration
+[Service]
+Type=oneshot
+ExecStart=/opt/icubedev-timeclock/bin/timeclock-ntp-apply.sh

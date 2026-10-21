@@ -1,0 +1,13 @@
+[Unit]
+Description=mk-timeclock Previous-Day Attendance Exceptions Email
+After=timeclock-server.service
+ConditionPathExists=/var/lib/timeclock/server.db
+[Service]
+Type=oneshot
+User=timeclock
+Group=timeclock
+ExecStart=/usr/bin/python3 /opt/icubedev-timeclock/bin/timeclock-missing-digest.py
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/timeclock
+UMask=0077

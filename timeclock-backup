@@ -1,0 +1,360 @@
+#!/usr/bin/env python3
+"""Backup and restore persistent BPI RFID timeclock state."""
+import argparse
+import grp
+import smtplib
+import sqlite3
+import ssl
+from email.message import EmailMessage
+from email.headerregistry import Address
+from urllib.parse import urlsplit
+import datetime as dt
+import fcntl
+import hashlib
+import json
+import os
+from pathlib import Path
+import shutil
+import subprocess
+import sys
+import tarfile
+import tempfile
+import time
+import urllib.request
+
+DEFAULT_DATA = '/var/lib/timeclock'
+DEFAULT_BACKUPS = '/var/backups/timeclock'
+
+def cmd(*args):
+    subprocess.run(args, check=True)
+
+def service(action, name):
+    if name != 'none':
+        cmd('systemctl', action, name)
+
+def archive_check(path):
+    with tarfile.open(path, 'r:gz') as tf:
+        members = tf.getmembers()
+        if len(members) > 1000000:
+            raise ValueError('Too many archive entries')
+        seen = set()
+        if not members or not any(m.name == 'data' and m.isdir() for m in members):
+            raise ValueError('Missing data directory')
+        for m in members:
+            parts = Path(m.name).parts
+            if m.name in seen: raise ValueError('Duplicate archive member')
+            seen.add(m.name)
+            if not parts or parts[0] != 'data' or any(x in ('..', '.') for x in parts):
+                raise ValueError('Unsafe path in archive')
+            if m.isfile() and m.size > 100 * 1024**3:
+                raise ValueError('Unreasonable archive entry size')
+            if not (m.isfile() or m.isdir()):
+                raise ValueError('Special files and links are not permitted')
+    return True
+
+def digest(p):
+    h = hashlib.sha256()
+    with open(p, 'rb') as f:
+        for b in iter(lambda: f.read(1024 * 1024), b''):
+            h.update(b)
+    return h.hexdigest()
+
+def share_archive(folder, archive):
+    group = grp.getgrnam('timeclock').gr_gid
+    os.chown(folder, 0, group)
+    os.chmod(folder, 0o750)
+    for path in (archive, Path(str(archive) + '.sha256')):
+        os.chown(path, 0, group)
+        os.chmod(path, 0o640)
+
+def email_scheduled(archive, dbpath):
+    """Opt-in daily archival email, independent from mailer and its retry queue."""
+    conn = sqlite3.connect(f"file:{dbpath}?mode=ro", uri=True, timeout=10)
+    try:
+        row = conn.execute('SELECT email_enabled,manager_id FROM backup_settings WHERE id=1').fetchone()
+        if not row or not row[0]:
+            print('Scheduled backup email disabled')
+            return
+        manager = conn.execute("""SELECT e.email FROM employees e
+              JOIN employee_roles r ON r.employee_id=e.id AND r.role='manager'
+              JOIN user_accounts u ON u.employee_id=e.id
+              WHERE e.id=? AND e.active=1 AND u.disabled=0""", (row[1],)).fetchone()
+        config = conn.execute('SELECT url,username,password,tls_mode,sender,sender_name FROM smtp_settings WHERE id=1').fetchone()
+
+    finally:
+        conn.close()
+    if not manager or not manager[0] or '@' not in manager[0]:
+        raise ValueError('Backup mail recipient no longer has an active manager role')
+    if not config or not config[0] or not config[4]:
+        raise ValueError('Backup email requires SMTP configuration')
+    url, user, password, tls, sender, sender_name = config
+    if tls not in ('none','starttls','implicit'):
+        raise ValueError('Unsupported SMTP encryption setting')
+    if archive.stat().st_size > 15 * 1024 * 1024:
+        raise ValueError('Backup email exceeds 15 MiB limit; local archive remains available')
+    parsed = urlsplit(url)
+    if parsed.scheme not in ('smtp','smtps') or not parsed.hostname or parsed.username or parsed.password or parsed.path not in ('','/') or parsed.query or parsed.fragment:
+        raise ValueError('Unsupported SMTP endpoint')
+    if (tls == 'implicit') != (parsed.scheme == 'smtps'):
+        raise ValueError('SMTP scheme/TLS mismatch')
+    context = ssl.create_default_context()
+    message = EmailMessage()
+    message['From'] = Address(display_name=sender_name, addr_spec=sender)
+    message['To'] = manager[0]
+    message['Subject'] = 'mk-timeclock scheduled backup: ' + archive.name
+    message.set_content('Daily timeclock backup attached. Contains confidential attendance and RFID data. Store securely and restrict mailbox access. Do not forward.')
+    message.add_attachment(archive.read_bytes(), maintype='application', subtype='gzip', filename=archive.name)
+    server_class = smtplib.SMTP_SSL if tls == 'implicit' else smtplib.SMTP
+    port = parsed.port or (465 if tls == 'implicit' else 587 if tls == 'starttls' else 25)
+    with server_class(parsed.hostname, port, timeout=30, context=context) if tls == 'implicit' else server_class(parsed.hostname, port, timeout=30) as server:
+        if tls == 'starttls':
+            server.ehlo()
+            server.starttls(context=context)
+            server.ehlo()
+        if user:
+            server.login(user, password)
+        server.send_message(message, from_addr=sender)
+    print('Scheduled backup delivered to configured manager:',manager[0])
+
+def prune(folder, keep):
+    backups = sorted(folder.glob('timeclock-*.tar.gz'))
+    for p in backups[:-keep]:
+        p.unlink()
+        Path(str(p) + '.sha256').unlink(missing_ok=True)
+
+def restore_status(backups, stage, message, archive=''):
+    """Persist a manager-visible outcome independently of the restored database."""
+    target = backups / '.restore-result.json'
+    temp = backups / '.restore-result.json.tmp'
+    payload = {'state': stage, 'message': str(message)[:400],
+               'archive': Path(archive).name if archive else '',
+               'at': dt.datetime.now(dt.timezone.utc).isoformat()}
+    with open(temp, 'w') as out:
+        json.dump(payload, out)
+        out.flush()
+        os.fsync(out.fileno())
+    os.chown(temp, 0, grp.getgrnam('timeclock').gr_gid)
+    os.chmod(temp, 0o640)
+    os.replace(temp, target)
+
+def unread_count(queue):
+    """Fail closed if the agent's real queue cannot be inspected."""
+    if not queue.is_file() or queue.is_symlink():
+        raise ValueError('Restore refused: agent queue database missing or unsafe')
+    conn = sqlite3.connect(f'file:{queue}?mode=ro', uri=True, timeout=5)
+    try:
+        present = {r[0] for r in conn.execute("SELECT name FROM sqlite_master WHERE type='table'")}
+        if not {'pending', 'rejected'} <= present:
+            raise ValueError('Restore refused: required queue tables missing')
+        pending = conn.execute('SELECT COUNT(*) FROM pending').fetchone()[0]
+        rejected_fields = {r[1] for r in conn.execute('PRAGMA table_info(rejected)')}
+        rejected_sql = 'SELECT COUNT(*) FROM rejected WHERE synced_at IS NULL' if 'synced_at' in rejected_fields else 'SELECT COUNT(*) FROM rejected'
+        rejected = conn.execute(rejected_sql).fetchone()[0]
+        if pending or rejected:
+            raise ValueError(f'Restore refused: {pending} unsent punches and {rejected} unresolved rejected punches')
+    finally:
+        conn.close()
+
+def confirm_services(services):
+    if not services: return
+    def snapshot(name):
+        data = subprocess.check_output(['systemctl','show',name,'--property=ActiveState,SubState,NRestarts'], text=True)
+        return dict(line.split('=',1) for line in data.strip().splitlines() if '=' in line)
+    initial = {name: int(snapshot(name).get('NRestarts','0')) for name in services}
+    for attempt in range(3):
+        time.sleep(2)
+        for name in services:
+            state = snapshot(name)
+            if state.get('ActiveState') != 'active' or int(state.get('NRestarts','0')) > initial[name]:
+                raise RuntimeError(f'Service unhealthy after restore: {name} ({state})')
+    if 'timeclock-server.service' in services:
+        # run-server.sh uses LISTEN_PORT from this environment file.
+        port = 8080
+        envfile = Path('/etc/timeclock/timeclock.env')
+        if envfile.exists():
+            for line in envfile.read_text().splitlines():
+                if line.startswith('LISTEN_PORT='):
+                    port = int(line.split('=', 1)[1].strip().strip('\"\''))
+                    break
+        if not 1 <= port <= 65535:
+            raise RuntimeError('Invalid server listen port')
+        try:
+            with urllib.request.urlopen(f'http://127.0.0.1:{port}/', timeout=3) as resp:
+                if resp.status >= 500: raise RuntimeError(f'Server health HTTP {resp.status}')
+        except Exception as exc:
+            raise RuntimeError(f'Restored server unreachable via loopback: {exc}') from exc
+
+def main():
+    ap = argparse.ArgumentParser(description=__doc__)
+    ap.add_argument('operation', choices=('backup', 'verify', 'restore', 'list'))
+    ap.add_argument('archive', nargs='?')
+    ap.add_argument('--data', default=DEFAULT_DATA)
+    ap.add_argument('--backups', default=DEFAULT_BACKUPS)
+    ap.add_argument('--service', default='timeclock-server.service', help='deprecated, use --services; none for offline tests')
+    ap.add_argument('--services', nargs='+', default=None, help='systemd writers to stop in order (default mailer, agent, server)')
+    ap.add_argument('--keep', type=int, default=30)
+    ap.add_argument('--email-scheduled', action='store_true', help='Email successful scheduled archive to configured manager')
+    ap.add_argument('--yes', action='store_true', help='Confirm destructive restore')
+    a = ap.parse_args()
+    if os.geteuid() != 0:
+        ap.error('Must be run as root')
+    data = Path(a.data).resolve()
+    backups = Path(a.backups).resolve()
+    if data == backups or data in backups.parents or backups in data.parents:
+        ap.error('Data and backup directories must be separate')
+    if a.keep < 1: ap.error('--keep must be at least 1')
+    services = a.services if a.services is not None else (['timeclock-mailer.service', 'timeclock-agent.service', 'timeclock-server.service'] if a.service == 'timeclock-server.service' else ([a.service] if a.service != 'none' else []))
+    for name in services:
+        if subprocess.check_output(['systemctl','show','--property=LoadState','--value',name], text=True).strip() != 'loaded':
+            raise ValueError(f'Service not loaded: {name}')
+    def stop_writers():
+        for name in services: service('stop', name)
+    def start_writers():
+        for name in reversed(services): service('start', name)
+    backups.mkdir(parents=True, exist_ok=True, mode=0o700)
+    if a.operation == 'backup':
+        os.chown(backups, 0, grp.getgrnam('timeclock').gr_gid)
+        os.chmod(backups, 0o750)
+    # For upgrades make older managed archives visible to the web server,
+    # without allowing it write access. No symlinks or external paths.
+    if a.operation == 'backup':
+        for old in backups.glob('timeclock-*.tar.gz'):
+            if old.is_file() and not old.is_symlink():
+                share_archive(backups, old) if Path(str(old)+'.sha256').is_file() and not Path(str(old)+'.sha256').is_symlink() else None
+    if a.operation == 'list':
+        for p in sorted(backups.glob('timeclock-*.tar.gz')): print(p)
+        return
+    lockpath = backups / '.operation.lock'
+    with open(lockpath, 'a+') as lock:
+        fcntl.flock(lock.fileno(), fcntl.LOCK_EX | fcntl.LOCK_NB)
+        if a.operation == 'backup':
+            if data.is_symlink(): raise ValueError('Data path cannot be a symlink')
+            if not data.is_dir(): raise ValueError(f'Data directory missing: {data}')
+            stop_writers()
+            try:
+                stamp = dt.datetime.now(dt.timezone.utc).strftime('%Y%m%dT%H%M%SZ')
+                target = backups / f'timeclock-{stamp}-{os.getpid()}.tar.gz'
+                tmp = backups / ('.' + target.name + '.partial')
+                try:
+                    with tarfile.open(tmp, 'w:gz', dereference=False) as tf:
+                        for root, dirs, files in os.walk(data, followlinks=False):
+                            dirs[:] = [x for x in dirs if not (Path(root)/x).is_symlink()]
+                            rel = Path(root).relative_to(data)
+                            tf.add(root, arcname=str(Path('data') / rel), recursive=False)
+                            for f in files:
+                                p = Path(root) / f
+                                if p.is_symlink() or not p.is_file():
+                                    raise ValueError(f'Unsupported file: {p}')
+                                tf.add(p, arcname=str(Path('data') / rel / f), recursive=False)
+                    archive_check(tmp)
+                    os.replace(tmp, target)
+                    side = Path(str(target) + '.sha256')
+                    side.write_text(digest(target) + '  ' + target.name + '\n')
+                    share_archive(backups, target)
+                    prune(backups, a.keep)
+                    print(target)
+                finally: tmp.unlink(missing_ok=True)
+            finally:
+                start_writers()
+            if a.email_scheduled:
+                email_scheduled(target, data / "server.db")
+            return
+        if not a.archive: ap.error('Archive path required')
+        archive = Path(a.archive).resolve()
+        if not archive.is_file(): raise ValueError('Archive not found')
+        check = Path(str(archive) + '.sha256')
+        if not check.is_file() or check.read_text().split()[0] != digest(archive):
+            raise ValueError('Missing or incorrect SHA256 sidecar')
+        archive_check(archive)
+        if a.operation == 'verify':
+            print('Archive verified:', archive)
+            return
+        if not a.yes: ap.error('Restore requires --yes')
+        # All outcome paths are written outside live state so the GUI can read them.
+        try:
+            if archive.parent != backups: raise ValueError('Archive outside managed backup directory')
+            if not (archive.name.startswith('timeclock-') and archive.name.endswith('.tar.gz')): raise ValueError('Not a managed backup')
+            if data.is_symlink(): raise ValueError('Data path cannot be a symlink')
+            if not data.parent.is_dir(): raise ValueError('Data parent directory missing')
+            previous = data.parent / ('.' + data.name + '.pre-restore')
+            failed = data.parent / ('.' + data.name + '.failed-restore')
+            # Both guards run before any services are stopped.
+            if previous.exists() or previous.is_symlink(): raise ValueError(f'Existing restore safety copy: {previous}')
+            if failed.exists() or failed.is_symlink(): raise ValueError(f'Existing failed restore copy: {failed}')
+            restore_status(backups, 'validating', 'Validating local archive', archive)
+            with tempfile.TemporaryDirectory(prefix='.restore-', dir=str(data.parent)) as staging:
+                staged = Path(staging) / 'data'
+                with tarfile.open(archive, 'r:gz') as tf:
+                    tf.extractall(staging, filter='data')
+                if not staged.is_dir(): raise ValueError('Invalid staging directory')
+                # tarfile filter=data strips ownership. Restore install.sh account and mode.
+                for root, dirs, files in os.walk(staged, followlinks=False):
+                    for name in dirs + files:
+                        entry = Path(root)/name
+                        if entry.is_symlink(): raise ValueError('Unexpected symlink in staged backup')
+                        shutil.chown(entry, user='timeclock', group='timeclock')
+                    shutil.chown(root, user='timeclock', group='timeclock')
+                staged.chmod(0o750)
+                tls_stage = staged / "tls-stage"
+                if tls_stage.is_dir():
+                    tls_stage.chmod(0o700)
+                for dbfile in staged.glob('*.db'):
+                    con = sqlite3.connect(f'file:{dbfile}?mode=ro', uri=True)
+                    try:
+                        result = con.execute('PRAGMA integrity_check').fetchone()
+                        if not result or result[0] != 'ok':
+                            raise ValueError(f'Backup database integrity failed: {dbfile.name}')
+                    finally: con.close()
+                # Queue check runs before stopping and again after writers stop.
+                unread_count(data / 'queue.db')
+                restore_status(backups, 'stopping', 'Checking pending attendance and stopping services', archive)
+                stopped = False
+                swapped = False
+                try:
+                    stopped = True
+                    stop_writers()
+                    unread_count(data / 'queue.db')
+                    if data.exists(): data.rename(previous)
+                    try:
+                        staged.rename(data)
+                        swapped = True
+                    except Exception:
+                        if previous.exists(): previous.rename(data)
+                        raise
+                    start_writers()
+                    confirm_services(services)
+                    restore_status(backups, 'success', 'Restore verified. Previous data saved for rollback.', archive)
+                    print(f'Restored: {data}')
+                except Exception as exc:
+                    if swapped:
+                        stop_writers()
+                        try:
+                            if failed.exists(): raise RuntimeError('Failed restore directory collision')
+                            data.rename(failed)
+                            if previous.exists(): previous.rename(data)
+                        except Exception as rollback_error:
+                            restore_status(backups, 'critical', f'Restore failed; manual recovery required: {rollback_error}', archive)
+                            raise RuntimeError('Automatic rollback failed; services intentionally remain stopped') from rollback_error
+                    # If rollback did not occur, original data is still present.
+                    if stopped:
+                        start_writers()
+                        try: confirm_services(services)
+                        except Exception as verify_error:
+                            restore_status(backups, 'critical', f'Original services unhealthy: {verify_error}', archive)
+                            raise
+                    restore_status(backups, 'failed', f'Restore refused or rolled back: {exc}', archive)
+                    raise
+        except Exception as exc:
+            try:
+                old_status = json.loads((backups / '.restore-result.json').read_text())
+                if old_status.get('state') != 'critical':
+                    restore_status(backups, 'failed', str(exc), archive)
+            except (OSError, ValueError):
+                restore_status(backups, 'failed', str(exc), archive)
+            raise
+
+if __name__ == '__main__':
+    try: main()
+    except Exception as e:
+        print('ERROR:', e, file=sys.stderr)
+        sys.exit(1)

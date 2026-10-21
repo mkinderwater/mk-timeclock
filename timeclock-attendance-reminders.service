@@ -1,0 +1,13 @@
+[Unit]
+Description=mk-timeclock Attendance Reminders
+After=timeclock-server.service
+ConditionPathExists=/var/lib/timeclock/server.db
+[Service]
+Type=oneshot
+User=timeclock
+Group=timeclock
+ExecStart=/usr/bin/python3 /opt/icubedev-timeclock/bin/timeclock-attendance-reminders.py
+NoNewPrivileges=true
+ProtectSystem=strict
+ReadWritePaths=/var/lib/timeclock
+UMask=0077

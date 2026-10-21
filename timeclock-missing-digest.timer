@@ -1,0 +1,9 @@
+[Unit]
+Description=mk-timeclock Morning Attendance Exceptions Digest
+[Timer]
+OnCalendar=*-*-* 08:00:00
+AccuracySec=1min
+Persistent=true
+Unit=timeclock-missing-digest.service
+[Install]
+WantedBy=timers.target

@@ -1,0 +1,18 @@
+{
+  "release": "1.9.5-RC3-cleanup6",
+  "base": "1.9.5-RC3-cleanup5",
+  "checks": [
+    {
+      "name": "test_rc3_mobile_browser.py",
+      "passed": true,
+      "includes": [
+        "Vacation allowance and neighboring phone inputs have equal top position and height at desktop width",
+        "Existing 320px/390px page layout checks",
+        "Employee creation/edit and over-allowance vacation request",
+        "Both send-time save/reload and annual CSV download"
+      ]
+    }
+  ],
+  "full_suite_rerun": false,
+  "database_changes": false
+}

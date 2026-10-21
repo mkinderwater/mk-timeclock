@@ -1,0 +1,7 @@
+[Unit]
+Description=Watch timeclock HTTPS certificate upload
+[Path]
+PathExists=/var/lib/timeclock/tls-stage/request
+Unit=timeclock-tls-apply.service
+[Install]
+WantedBy=multi-user.target

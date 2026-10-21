@@ -1,0 +1,7 @@
+[Unit]
+Description=Watch complete timeclock backup uploads
+[Path]
+PathExists=/var/lib/timeclock/backup-inbox/.ready
+Unit=timeclock-backup-upload.service
+[Install]
+WantedBy=multi-user.target

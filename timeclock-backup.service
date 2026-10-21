@@ -1,0 +1,8 @@
+[Unit]
+Description=mk-timeclock Daily State Backup
+After=local-fs.target
+ConditionPathIsDirectory=/var/lib/timeclock
+[Service]
+Type=oneshot
+ExecStart=/opt/icubedev-timeclock/bin/timeclock-backup backup --email-scheduled
+UMask=0077

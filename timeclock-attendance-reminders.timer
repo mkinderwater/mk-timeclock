@@ -1,0 +1,9 @@
+[Unit]
+Description=mk-timeclock Scheduled IN/OUT Reminder Check
+[Timer]
+OnCalendar=*-*-* *:*:00
+AccuracySec=15s
+Persistent=false
+Unit=timeclock-attendance-reminders.service
+[Install]
+WantedBy=timers.target

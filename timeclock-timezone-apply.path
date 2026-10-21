@@ -1,0 +1,7 @@
+[Unit]
+Description=Watch timeclock timezone requests
+[Path]
+PathExists=/var/lib/timeclock/timezone.request
+Unit=timeclock-timezone-apply.service
+[Install]
+WantedBy=multi-user.target
