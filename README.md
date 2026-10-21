@@ -111,6 +111,23 @@ The driver uses `/dev/spidev0.0` at 250 kHz and performs reader reset over SPI. 
 | GND | 9 | Ground |
 | SDA | 3 | PA12, I²C0 data |
 | SCL / SCK | 5 | PA11, I²C0 clock |
+| RES / RST | Not connected | No external reset wire was fitted |
+| DC | Not connected | Configured by the onboard I²C bridges |
+| CS | Not connected | Configured by the onboard I²C bridges |
+
+For the project's 2.42-inch SSD1309 PCB, convert SPI to I²C as follows:
+
+| PCB location | Modification |
+| --- | --- |
+| R8 | Remove the 0 Ω resistor; leave these pads open |
+| R9 | Fit the removed resistor here, or solder-bridge the pads |
+| R10 | Solder-bridge the pads |
+| R11 | Solder-bridge the pads |
+| R12 | Solder-bridge the pads |
+
+These component labels apply to this particular OLED PCB, not every SSD1309 module. The converted display was detected at `0x3c` on `/dev/i2c-0`.
+
+**The OLED RES/RST connection was considered but never fitted. Leave it unconnected in this build; do not wire it to 3.3 V or a GPIO.** The RC522 RST connection above is separate and remains tied to 3.3 V.
 
 Default device: `/dev/i2c-0`. Default address: `0x3c`. Confirm the module's controller, supply requirements, connector order, and address before connection; OLED modules do not all have the same pin order.
 
