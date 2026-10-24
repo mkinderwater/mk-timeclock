@@ -263,15 +263,27 @@ These previews use fictional employees for October 12–16, 2026. Click an image
 
 [![Daily Detail showing Sarah’s late arrival and approved early departure](payroll-exceptions.png)](payroll-exceptions.png)
 
-## Additional clocks
+## One workplace, multiple clocks
 
-Install a Secondary with:
+Start with one clock. Add Secondary clocks at other entrances, workshops or buildings as needed. Each runs on its own hardware and connects to the same Primary.
+
+- **One set of records:** the Primary manages employees, cards, schedules, vacation and payroll. Secondary clocks collect punches; they do not maintain separate payroll records.
+- **Use any connected clock:** an employee can clock IN at one and OUT at another. The Primary combines their punches into the same attendance record.
+- **Keep recording during an outage:** each Secondary caches authorized cards and saves punches locally with their original timestamps. It uploads queued punches when the Primary is reachable again. Card changes take effect after the Secondary next refreshes its cache.
+- **Know where a punch came from:** records retain the source clock. Give clocks names such as Main entrance or Workshop.
+- **Keep management central:** review attendance, correct punches and export payroll from the Primary. If it is unavailable, Secondary clocks can queue punches, but management and reporting wait for it to return.
+
+The intended scale is a small business with one or several clock locations. Capacity depends on punch volume, report workload, network and Primary hardware. Employee and clock capacity have not been load-tested. The current management list displays up to **100 registered clocks**; this is a display limit, not a capacity rating.
+
+### Add a Secondary
+
+Install the same OS image and upload the source ZIP, then run:
 
 ```bash
 ./install-slave.sh
 ```
 
-Generate an adoption code on the Primary, enter it on the Secondary's setup page and approve the request on the Primary. Secondary clocks queue punches while offline and upload them when reconnected.
+Generate an adoption code on the Primary, enter it on the Secondary's setup page and approve the request on the Primary. Each Secondary needs network access to the Primary to register, refresh cards and upload punches.
 
 ## Backups and upgrades
 
