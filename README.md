@@ -1,74 +1,163 @@
 # mk-timeclock Lite
 
-RFID attendance recording, employee vacation requests, and payroll reporting for the **Banana Pi BPI-M2 Zero**.
+**A free, DIY RFID employee time clock for the Banana Pi BPI-M2 Zero.** Build your own attendance clock with an RC522 RFID reader, a small OLED display, and a buzzer. Record real IN/OUT punches, manage employees in a web browser, and export timesheets for payroll.
 
-Developed by **iCube Development (Calgary) Ltd.** The clock combines an RC522 reader, a 128 × 64 OLED, audible swipe feedback, and a browser-based manager interface. A single device can operate as the Primary, or additional Secondary clocks can send attendance to it.
+**No subscription. No cloud account required. No proprietary time clock terminal.** The Primary clock runs its own local database and web application. Optional Secondary clocks send punches to it and queue records when offline. Email features need a configured SMTP server.
 
-**Attendance rules:** IN starts recorded elapsed time; OUT ends it. Missing punches are flagged. The application does not invent an OUT, deduct breaks, calculate overtime pay, or decide which hours are payable.
+Built by **iCube Development (Calgary) Ltd.** for practical attendance recording, with source code, a repeatable hardware build, and readable technical documentation. Designed for small businesses, workshops, makers, Raspberry Pi and Banana Pi enthusiasts, IT administrators, and developers who prefer to understand their own systems.
 
-This README describes **1.9.5-RC3-cleanup27**. The release contains source code and installation scripts, not an operating-system image.
+> **Current release:** `1.9.5-RC3-cleanup27` (release candidate). This package contains source and installers, not a ready-to-flash timeclock image. Use the separately published supported OS image described below. Hardware acceptance and full production testing remain the installer's responsibility.
 
-## Contents
+## Why build mk-timeclock?
 
-- [Features](#features)
-- [Hardware and operating system](#hardware-and-operating-system)
-- [Pinouts and wiring](#pinouts-and-wiring)
-- [Installation](#installation)
-- [First setup](#first-setup)
-- [Additional clocks](#additional-clocks)
-- [Payroll and vacation reporting](#payroll-and-vacation-reporting)
-- [Backups and recovery](#backups-and-recovery)
-- [Configuration and services](#configuration-and-services)
-- [Troubleshooting](#troubleshooting)
-- [Development and verification](#development-and-verification)
-- [Further documentation](#further-documentation)
+A basic time clock should do a few things well: recognize a card, record the actual punch, show the employee what happened, and make the records accessible to whoever manages attendance. It should not require a recurring fee or decide your payroll policy.
+
+mk-timeclock follows that approach. An **IN** starts recorded elapsed time. An **OUT** stops it. Missing punches are flagged instead of being fabricated. There are no automatic unpaid breaks, overtime wage rules, or invented payable hours. Managers review and correct exceptions, with a history of changes. Payroll exports describe **recorded attendance**, not a payroll calculation engine.
+
+### At a glance
+
+| | What you get |
+| --- | --- |
+| **Hardware** | Banana Pi BPI-M2 Zero, MFRC522/RC522 13.56 MHz RFID reader, 128 × 64 SSD1309 OLED, buzzer |
+| **User feedback** | Employee name, IN/OUT confirmation, clock time, audible accepted/rejected scan signals |
+| **Storage** | Local SQLite database on the Primary; persistent offline punch queue on each reader clock |
+| **Management** | Browser-based HTTPS dashboard for employees, cards, schedules, corrections, leave, reports, and settings |
+| **Multi-clock** | One authoritative Primary and optional adopted Secondary reader clocks |
+| **Reporting** | Daily attendance, employee timesheets, payroll CSV and Excel-compatible workbooks, saved report revisions |
+| **Time off** | Vacation requests, manager approvals, holiday calendars, CSV holiday import, annual usage reports |
+| **Maintenance** | Local backups/restore, service diagnostics, test suite, shell installer, C source |
+| **Cost model** | Free software, self-hosted. No mandatory SaaS or per-employee subscription |
+
+## See how it works
+
+```text
+Employee presents RFID card
+          |
+          v
+ RC522 reader on Banana Pi
+          |
+          +--> OLED shows employee + IN / OUT
+          +--> Buzzer confirms valid or rejected card
+          +--> Punch is saved to local persistent queue
+                            |
+                       Network available?
+                            |
+                            v
+                 Primary clock over HTTPS
+                            |
+                   SQLite attendance records
+                            |
+                    Manager web dashboard
+                      /      |       \
+                Timesheets  Leave    Payroll exports
+```
+
+A single Primary clock is enough for one entry point. Add Secondary reader clocks for separate entrances or work areas. If a Secondary loses network access, it retains queued punches and uploads them after connection returns. Secondary clocks are **not** automatic backup servers or database replicas.
 
 ## Features
 
-### Attendance and employees
+### The experience at the clock
 
-- RFID attendance using RC522 cards and fobs, with employee names and IN/OUT feedback on the OLED.
-- Different audible feedback for accepted and rejected scans, without blocking the reader loop.
-- Persistent local swipe queue and cached employee cards for network interruptions. Accepted queued attendance is uploaded when connectivity returns.
-- Employee creation, multiple attendance cards, lost-card replacement, and card activation/deactivation.
-- Separate manager cards for protected changes. Manager-card scans do not record attendance.
-- Recurring weekly schedules, dated shifts, and a no-schedule option.
-- Per-clock late grace and repeat-swipe settings, with late-arrival and early-departure notices and private explanation links.
-- Manager corrections, recorded absences, and audit history.
-- Punch-required and vacation-only employee modes.
+- Tap an assigned RFID card or fob to record attendance, without a keyboard, touchscreen, or employee login.
+- See the employee's first name and the recorded **IN** or **OUT** on the 128 × 64 OLED.
+- Hear distinct, nonblocking feedback for accepted and rejected cards.
+- See current time and clock status. Cards and pending punches are cached locally.
+- Use a separate manager card to authorize protected operations without adding attendance punches.
+- Adjust duplicate-swipe protection and lateness grace on each clock.
 
-### Employee vacation
+### Employees, attendance, and exceptions
 
-- Private timesheet links for viewing recorded shifts and leave, approving a timesheet, or reporting a concern.
-- Private vacation links with manager approval, denial, cancellation, and email notifications.
-- Manager entry of vacation approved verbally or by email, including past vacation before installation, without entry emails.
-- Vacation forms contain dates, calculated working days, return date and optional notes. Other absences are recorded separately.
-- Optional annual vacation allowance, including zero and half-day allowance values.
-- **X of Y days used** on the time-off form and reports. Requests can exceed the allowance; there is no accrual or balance enforcement.
-- Annual vacation CSV export and manual or CSV holiday entry.
+- Add, edit, activate, and deactivate employees; assign more than one card, replace a lost card, or disable it.
+- Assign an optional company Employee ID, including identifiers with leading zeros.
+- Define recurring weekly schedules, dated shifts, or employees with no fixed schedule.
+- Flag missing IN/OUT pairs, late arrivals, and early departures; record a reason without silently changing the punch.
+- Avoid treating an ordinary lunch return as an early departure: departure checks wait until the scheduled end plus grace and consider returns. Corrected or manually added departures use the same deferred check.
+- Make manager-only corrections or manually record a missing punch with audit history.
+- Record excused absences separately from actual hours worked.
+- Show employee timesheets through private HTTPS links; support period review, approval, and reporting a concern according to employee mode.
 
-### Reporting and administration
+### Vacation, holidays, and notifications
 
-- Weekly, biweekly, twice-monthly, and monthly pay-period schedules.
-- Closed-period exports with preserved CSV revisions and revised-report delivery.
-- Excel workbooks with **Payroll Summary** and **Daily Detail** tabs.
-- Employee ID columns, employee-grouped detail, alternating block shading, AutoFilter, and Summary links to each employee's detail.
-- Independent local send times for payroll reports and timesheet links, including zero-day offsets.
-- SMTP sender name/address, editable email templates, delivery queue, and retry status.
-- HTTPS certificate installation, time synchronization, local timezone selection, display settings, clock adoption, system health, and diagnostics.
-- Local backup/download/restore workflows and optional scheduled backup email.
+- Let employees submit vacation requests from a private link.
+- Calculate working days using employee schedules and the holiday calendar; suggest a return-to-work date.
+- Allow managers to approve, deny, cancel, or directly enter already-approved and historical vacation.
+- Track optional annual allowance and **days used**, including approved future bookings; allowance is informational, not a hard limit.
+- Add statutory holidays one at a time or stage and review a batch **CSV import**.
+- Send configurable email for relevant attendance, vacation, employee-link, and payroll events through SMTP, with queue/retry visibility.
+- Give employees private explanation links for eligible attendance exceptions; record manager notes and actions.
 
-**Touch input is not implemented in this release.** A TTP223 module is not required and has no assigned connection in the current agent.
+### Reporting for real businesses
+
+- Choose **weekly, biweekly, semi-monthly, or monthly** pay periods.
+- Review timesheets, exceptions, and approvals before preparing payroll.
+- Export attendance as CSV and create Excel workbooks with **Payroll Summary** and **Daily Detail**.
+- Preserve a report's source CSV when exported. Later changes create a **new revision**, not a silent replacement.
+- Identify closed pay periods that have changed because of late punches, manager edits, or leave updates.
+- Set separate local send times for payroll reports and employee timesheet links.
+- Export annual vacation usage and holiday-aware leave reporting.
+
+### Built for maintainability
+
+- Small native C programs for the clock reader, server, and mailer; SQLite rather than a separate database server.
+- Python and shell for setup, UI generation, checks, and supporting utilities.
+- A single shared installer with clear Primary/Secondary entrypoints.
+- Local backup, download, and restore operations, plus optional backup email. Each clock keeps its own backups.
+- SSH, systemd, journal logs, a health endpoint, and documented configuration for troubleshooting.
+- Source-visible behavior and a maintained automated regression suite.
+
+**Not included:** touchscreen attendance, biometric identification, automatic break deductions, overtime/pay-rate calculations, payment processing, automatic Primary failover, or backup replication. The optional TTP223 touch module has no assigned function or connection in this release.
+
+## Quick start
+
+**1. Assemble the clock.** Use the Banana Pi BPI-M2 Zero, RC522, supported SSD1309 OLED module, compatible buzzer and a stable power supply. A project-specific 3D-printed enclosure is described in the hardware section. Confirm the exact pinout before powering on.
+
+**2. Flash the supported image.** Get [bpi-zero-wbuild 3.13](https://github.com/mkinderwater/bpi-zero-wbuild/releases/tag/3.13), write it to a microSD card, set your Wi-Fi and timezone in `CONFIG.TXT`, and boot the Banana Pi. The installer checks the supported board/image environment.
+
+**3. Copy this repository onto the Pi.** From its extracted source directory:
+
+```bash
+python3 rc1-preflight.py
+sudo ./install-master.sh
+```
+
+The installer installs target dependencies, builds the programs, configures services, and sets up HTTPS. Use `sudo ./install-slave.sh` **instead** for an additional Secondary clock.
+
+**4. Open the setup page:** `https://<clock-ip>/setup`. Create a manager account, pair a manager card, configure time synchronization, HTTPS, employees and cards. Test a genuine IN/OUT pair before relying on the reports.
+
+**5. Run it locally.** Visit `https://<clock-ip>/login` to administer employees, attendance, vacation and payroll exports. A trusted certificate and hostname are recommended before issuing employee links.
+
+See [Installation details](#installation), [Wiring](#pinouts-and-wiring), and [First setup](#first-setup) for the full procedure.
+
+## Who is this for?
+
+- **DIY builders and makers:** a real RFID + OLED + SBC project you can wire, print, test, and modify.
+- **Small businesses and workshops:** practical local attendance without mandatory cloud subscriptions.
+- **Systems administrators:** self-hosted HTTPS, SQLite, SMTP, time synchronization, service logs, and backups.
+- **Developers:** native C, device interfaces, revisioned exports, end-to-end tests, and documented attendance semantics.
+- **Schools and learning labs:** a substantial embedded Linux example combining SPI, I²C, GPIO, a web service, and a relational database. Use test data rather than real employee records in classroom deployments.
+
+## Documentation map
+
+| Goal | Start here |
+| --- | --- |
+| Assemble and wire hardware | [Hardware](#hardware-and-operating-system) and [Pinouts](#pinouts-and-wiring) |
+| Install first clock | [Installation](#installation) and [Installation and roles](docs/INSTALLATION.md) |
+| Add another reader | [Additional clocks](#additional-clocks) |
+| Understand punches and pay periods | [Attendance and payroll](docs/ATTENDANCE_PAYROLL.md) |
+| Manage holidays, leave, notifications | [Manager operations](docs/OPERATIONS.md) |
+| Understand backups | [Backup and restore](docs/BACKUP_RESTORE.md) |
+| Run or extend tests | [Testing](docs/TESTING.md) |
+| Inspect SQLite structures | [Schema](docs/SCHEMA.md) |
 
 ## Build and install overview
 
-Use the **Timeclock Build and Install Guide** for the illustrated assembly sequence. This README provides the matching wiring reference, software commands, features, and maintenance details.
+Use the **Timeclock Build and Install Guide** if you have a copy of the illustrated assembly guide. It is not included in this source archive. The instructions below provide the wiring reference and deployment procedure.
 
-1. **Build:** print case v8.34, solder right-angle headers, convert the OLED to I²C, mount the components, then connect and check all 14 wires with power disconnected.
-2. **Software:** write the bpi-zero-wbuild 3.13 image, configure Wi-Fi and SSH access, start the clock, copy the software, then install the chosen role.
-3. **Finish:** create the first manager, test the display and cards, close the case, and mount it.
+1. **Hardware:** print case v8.34 if available, mount the components, convert the supported OLED PCB to I²C, and inspect all 14 jumper connections with power disconnected.
+2. **Software:** flash the prepared bpi-zero-wbuild 3.13 image, configure Wi-Fi, transfer this source tree, and install one role.
+3. **Finish:** create a manager, test cards and output devices, close the case, and mount the clock.
 
-**Primary** is the first or only clock and hosts the database and management website. **Secondary** means an additional reader clock. The source, service messages, and installer filename use the term `slave` for this role.
+**Primary** is the first or only clock. **Secondary** is an additional reader. Source code, scripts, and service messages may use the older technical name `slave` for Secondary.
 
 ## Hardware and operating system
 
@@ -223,17 +312,17 @@ cat /etc/bpi-zero-wbuild-release
 
 Replace the example IP with the clock's address. The image marker should identify `3.13-trixie-minimal-hw`. The SSH root password is separate from the manager account created later.
 
-Copy `mk-timeclock-lite-RC3-cleanup6.zip` to `/root` using SFTP/WinSCP or `scp`, then run on the clock:
+Copy this repository or the `mk-timeclock-lite-RC3-cleanup27.zip` source archive to `/root` using SFTP/WinSCP or `scp`, then run on the clock:
 
 ```bash
 sudo apt-get update
 sudo apt-get install -y unzip python3
 cd /root
-unzip mk-timeclock-lite-RC3-cleanup6.zip
-cd mk-timeclock-lite-RC3-cleanup6
+unzip mk-timeclock-lite-RC3-cleanup27.zip
+cd mk-timeclock-lite-RC3-cleanup27
 ```
 
-These commands match the guide's cleanup6 source archive. If using a different release, use its actual archive and extracted directory names. The prepared image must expose the SPI, I²C, and GPIO devices listed above.
+If using a Git clone or another release, enter its actual source directory instead. The zip filename above refers to the cleanup27 archive, not a required download URL. The prepared image must expose the SPI, I²C, and GPIO devices listed above.
 
 Run commands from the source directory. If an archive or download has lost executable permissions:
 
@@ -300,7 +389,7 @@ Use `YYYY-MM-DD` dates and simple holiday names without commas. Import stages ch
 
 The **Primary** owns the authoritative attendance database and hosts manager administration. Each **Secondary** reads cards, maintains its local queue, and uploads attendance to the Primary.
 
-Install an Secondary clock with:
+Install a Secondary clock with:
 
 ```bash
 sudo ./install-slave.sh
@@ -529,3 +618,17 @@ Known limits include a serial web backend, report rebuilding on historical perio
 - [Schema ownership](docs/SCHEMA.md)
 - [Testing and current limitations](docs/TESTING.md)
 - [Cleanup history and validation notes](CLEANUP_REPORT.md)
+
+## Project status, licence, and contributions
+
+**Status:** RC3 release candidate, not certified commercial timekeeping or payroll software. Current automated checks are summarized in [Development and verification](#development-and-verification). Real-hardware, power-loss, network recovery, restore, and production email tests remain important before use with employee records.
+
+**Free and publicly readable source:** This repository is intended to make a self-hosted employee RFID time clock available without a subscription. However, **this supplied archive does not contain a `LICENSE` file**. Until a licence is added, the project should not be described as legally open-source under a specific OSI-approved licence, and reuse/distribution permissions should not be assumed. The repository owner should add the intended licence before inviting public forks or redistribution.
+
+For issues and contributions, include the release version, Primary/Secondary role, exact board/image version, relevant logs with credentials and employee details removed, and steps to reproduce. For code changes, run the maintained tests and describe which on-device checks were performed. Don't publish RFID UIDs, private employee links, SMTP passwords, backups, or payroll data in public issues.
+
+### Discoverability
+
+Topics suitable for this GitHub project: `rfid`, `time-clock`, `employee-attendance`, `time-tracking`, `diy-electronics`, `banana-pi`, `bpi-m2-zero`, `rc522`, `mf-rc522`, `oled`, `ssd1309`, `sqlite`, `self-hosted`, `linux`, `embedded-c`, `payroll-export`, `open-hardware` (only if enclosure design files are publicly released).
+
+**Keywords:** free RFID time clock software, DIY employee time clock, self-hosted attendance system, Banana Pi RFID clock, RC522 time attendance, open source timeclock alternative, employee timesheets, offline RFID time tracking, payroll CSV export, small business time clock.
