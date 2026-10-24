@@ -2,9 +2,9 @@
 
 A free, self-hosted RFID employee time clock for the **Banana Pi BPI-M2 Zero**, developed by **iCube Development (Calgary) Ltd.**
 
-Record attendance, manage employees and vacation, and export payroll reports from a web browser. No subscription or cloud account is required.
+Tap a card to clock IN or OUT. Manage attendance and vacation in your browser. Export payroll to Excel or CSV. **No subscription, per-employee fees or required cloud account.**
 
-Attendance is recorded locally; email delivery requires access to your SMTP server, and Secondary clocks need a network connection to upload queued punches to the Primary.
+Attendance is stored locally. Email needs access to your SMTP server; Secondary clocks need a network connection to upload queued punches to the Primary.
 
 Current release: **1.9.5-RC3-cleanup27**.
 
@@ -16,21 +16,19 @@ Current release: **1.9.5-RC3-cleanup27**.
 | --- | --- | --- |
 | ![Front of the mk-timeclock](https://raw.githubusercontent.com/mkinderwater/mk-timeclock/main/front.png) | ![Back of the mk-timeclock](https://raw.githubusercontent.com/mkinderwater/mk-timeclock/main/back.png) | ![Internal assembly of the mk-timeclock](https://raw.githubusercontent.com/mkinderwater/mk-timeclock/main/internals.png) |
 
-## Manage attendance and vacation in your browser
+## The management interface
 
-**See the exceptions. Keep the actual times. Prepare payroll with the details intact.**
+Screenshots use fictional employees. Click an image to view it full size.
 
-These screenshots show the actual management interface with fictional employees. Click either image to view it full size.
+### Review attendance
 
-### Attendance at a glance
-
-Review today's punches and the clock display from one page. **Late arrivals and early departures stand out**, with the minutes shown beside the punch. Normal lunch OUT/IN punches remain visible, and the corrections page is one click away.
+**See who arrived late or left early, and by how many minutes.** Overview shows today's punches and the clock display, with a link to corrections. Lunch OUT/IN punches remain in the record.
 
 [![Overview showing employee punches, a late arrival and an early departure](overview.png)](overview.png)
 
-### Vacation decisions without the paperwork
+### Manage vacation
 
-**Waiting requests come first.** Approve or deny requests, record vacation approved elsewhere, and review upcoming and past bookings. Filter history by employee or year. Holiday exclusions appear separately from vacation days, and the annual report downloads as an Excel-compatible CSV.
+**Waiting requests come first.** Approve or deny them, record vacation approved elsewhere, and filter upcoming or past bookings by employee and year. Stat holidays are counted separately. Download the annual report as an Excel-compatible CSV.
 
 [![Vacation management showing waiting requests, approved bookings, holiday exclusions and annual reporting](vacation.png)](vacation.png)
 
@@ -38,34 +36,32 @@ Review today's punches and the clock display from one page. **Late arrivals and 
 
 ### For business owners
 
-- **Keep control of your records:** run the system locally, without a subscription, per-employee software fees or a required cloud account.
-- **Track attendance:** card-based IN/OUT punches, employee names on the display, audible confirmation and a view of who is recorded as clocked IN.
-- **Manage your team:** search employees by name, use your company's Employee IDs, assign attendance cards and keep manager authorization cards separate.
-- **Review exceptions:** weekly or dated schedules, configurable grace, late arrivals, final early departures and missing-punch flags. Managers can correct records and add explanations, with an audit history.
-- **Prepare payroll:** weekly, every-two-weeks, twice-monthly or monthly periods; employee timesheet review and approval; manager overrides; CSV and Excel exports with employee summaries and shift detail. Saved revisions preserve earlier reports.
-- **Handle vacation:** employee requests, manager approvals, previously approved or historical vacation, annual usage against an optional allowance, holiday calendars and CSV holiday import.
-- **Automate communication:** choose when timesheet links and payroll reports are sent. Edit notification templates and use your own SMTP server for employee and manager emails.
-- **Recover your data:** daily local backups, optional emailed backup copies, manager-authorized downloads and restore.
+- **Attendance:** RFID IN/OUT, names on the display, audible confirmation and a Who is in view.
+- **Exceptions:** weekly or dated schedules, grace, late arrivals, early departures and missing punches. Manager corrections and notes are audited.
+- **Employees:** name search, company Employee IDs, attendance cards and separate manager cards.
+- **Payroll:** weekly, biweekly, twice-monthly or monthly periods; timesheet approval, manager overrides and saved CSV/Excel revisions.
+- **Vacation:** requests, approvals, historical entries, annual usage and allowances. Add holidays manually or import CSV.
+- **Email:** scheduled timesheet links and payroll reports, editable templates and your SMTP server.
+- **Backups:** daily local archives, optional emailed copies, download and restore.
 
 ### For installers and resellers
 
-- **Deploy one clock or several:** a Primary hosts management and attendance records; approved Secondary clocks upload punches and keep a local queue during network outages.
-- **Repeat the installation:** use the prepared OS image and included installer on the supported Banana Pi hardware.
-- **Maintain it through the browser:** manage clock names, HTTPS certificates, email delivery, device health and system operations.
-- **Supply and customize clocks:** commercial use and redistribution are permitted under AGPL-3.0. See [License](#license) for source-sharing obligations.
+- A Primary hosts management and records. Approved Secondary clocks queue punches during outages and upload when reconnected.
+- Install from the prepared OS image and source ZIP.
+- Manage clock names, HTTPS certificates, email and device health through the browser.
+- Commercial use and redistribution are permitted under [AGPL-3.0](#license).
 
 ### For makers and developers
 
-- **Build with common parts:** RC522 reader, SSD1309 OLED, active buzzer, Wi-Fi antenna and a printed enclosure.
-- **Work with accessible tools:** C programs, SQLite storage, Python and shell helpers on Linux.
-- **Adapt the system:** source and build scripts are available for modifying the interface, reports, notifications and hardware integration.
-- **Develop against real workflows:** the repository includes automated checks for attendance, payroll exports, vacation, notifications and management pages.
+- Common modules, a printable enclosure and documented wiring.
+- C, SQLite, Python and shell on Linux.
+- Source, build scripts and automated workflow checks included.
 
-An IN starts recorded time; an OUT stops it. Missing punches are flagged. The clock does not invent hours, deduct breaks, calculate overtime pay or decide which hours are payable.
+**IN starts recorded time. OUT stops it.** Missing punches are flagged, not filled in. There are no automatic break deductions, overtime pay calculations or wage calculations. Payroll decides what is payable.
 
 ## Estimated build cost
 
-Budget **C$90–150 per clock in 2026**, typically around **C$120**, including electronics, a microSD card, power supply and material for a self-printed enclosure. Software is free. Shipping, tax, tools, assembly labour and extra employee cards are additional.
+Budget **C$90–150 per clock**, typically **C$120** at estimated 2026 prices. This includes electronics, microSD, power supply and printed-case material. Shipping, tax, tools, labour and extra cards are additional.
 
 ## What you need
 
@@ -83,23 +79,23 @@ Budget **C$90–150 per clock in 2026**, typically around **C$120**, including e
 
 ### Component photos
 
-These are the electronic modules used in the build. The images show the boards, connectors and markings to look for when sourcing parts. Check the specifications and pin labels on your actual hardware before connecting power.
+Use these images to identify parts. Check your board markings against the wiring tables before connecting power.
 
 | RFID reader and credentials | 2.42-inch OLED display |
 | :---: | :---: |
 | [![RC522 RFID reader, card, fob and eight-pin header](rfid.png)](rfid.png) | [![Front and rear of the seven-pin SSD1309 OLED display](oled.png)](oled.png) |
-| **RC522 / MFRC522, 13.56 MHz**. Reader module, card, key fob and header shown. | **SSD1309, 128 × 64**. Front and rear views show the seven-pin header and board markings used for I²C configuration. |
+| **RC522 / MFRC522, 13.56 MHz.** Reader, card, fob and header. | **SSD1309, 128 × 64.** Seven-pin board configured for I²C. |
 
 | USB-C power breakout | Active buzzer |
 | :---: | :---: |
 | [![USB-C breakout board showing G, positive D, negative D and V pads](usb-c.png)](usb-c.png) | [![Two views of a wired active buzzer showing its housing and voltage marking](buzzer.png)](buzzer.png) |
-| **USB-C breakout**. Four pads marked `G`, `+D`, `-D` and `V`; only power and ground are used here. | **Two-wire active buzzer**. Both housing views and the red/black leads are shown. |
+| **USB-C breakout.** Connect `V` and `G` for power. | **Two-wire active buzzer.** Red and black leads. |
 
-The OLED and USB-C illustrations show specific PCB layouts. Other versions can have different pad locations or component arrangements, even when sold under the same name. Follow the [wiring tables](#wiring) and [OLED I²C changes](#oled-ic0) for this build, not the images alone.
+PCB layouts vary. Use the [wiring tables](#wiring) and the OLED resistor labels below to identify connections.
 
 ### Print the enclosure
 
-**Print in PLA or ASA. ASA is recommended. No supports are required.**
+**PLA or ASA. ASA recommended. No supports required.**
 
 Case v8.34 uses internal M2 × 5 mm fasteners for the OLED and RC522. Use right-angle headers to fit the enclosure.
 
@@ -113,9 +109,7 @@ These are **physical pin numbers** on the Banana Pi's 40-pin header. Disconnect 
 
 ### Wi-Fi antenna
 
-The internal photo shows a slim rectangular **PCB Wi-Fi antenna** mounted flat against the inside of the front panel, **to the right of the RC522 reader**, with its long edge vertical.
-
-Use a stick-on **2.4 GHz antenna with a thin coax lead and IPEX/u.FL plug**. Connect it to the Banana Pi's small gold antenna socket near the HDMI connector. Route the lead around the lower edge of the assembly, as pictured.
+Use a **2.4 GHz PCB antenna with an IPEX/u.FL lead**. Connect it to the gold socket near the HDMI connector. Mount it vertically inside the front panel, to the right of the RC522, as shown in the internal photo. Route the lead around the lower edge.
 
 ### RC522: SPI0
 
@@ -212,8 +206,6 @@ The installer handles dependencies, compilation and service setup.
 
 Visit `https://<clock-ip>/setup` and create your manager account. Scan a card to register it for manager authorization.
 
-A fresh installation uses a self-signed HTTPS certificate. You can upload your own through Settings.
-
 ## Set up your business
 
 - Add employees, company Employee IDs and attendance cards.
@@ -234,26 +226,26 @@ Use `YYYY-MM-DD` dates. Review imported rows and click **Save holidays**.
 
 ## Daily use
 
-Employees tap their cards to clock IN and OUT. Managers use **Punches and corrections** to resolve missing punches, correct times and record explanations.
+Employees tap to clock IN and OUT. Managers use **Punches and corrections** to resolve missing punches, correct times and add notes.
 
 Late arrivals are checked against the scheduled start and grace. Early departures are checked after the scheduled finish plus grace, allowing for lunch and other returns.
 
-Employees can request vacation through their private link. Managers approve requests or record vacation approved verbally, by email or before the clock was installed. Annual usage appears as **X of Y days**; the allowance is informational and does not block requests.
+Employees request vacation through a private link. Managers approve requests or record earlier approvals, including verbal, emailed and historical vacation. Annual usage shows **X of Y days**. The allowance is a reference, not a limit.
 
 ## Payroll
 
 Review and close the pay period, create an export, then send the report when needed. The Excel workbook has two tabs:
 
-- **Payroll Summary:** one line per employee, showing worked hours, vacation days, sick days, stat holidays, other recorded leave, and exceptions or manager notes. Annual vacation shows days used against the employee’s allowance, such as **6 of 15 days**. The allowance is for reference; it does not block requests.
-- **Daily Detail:** dated shifts with actual IN and OUT times, worked hours, attendance status, and notes or corrections. Late arrivals and early departures show the affected date and minutes. Approved vacation, stat holidays and recorded absences have their own rows.
+- **Payroll Summary:** employee hours, vacation, sick days, stat holidays, other recorded leave and exceptions. Annual vacation shows days used against the allowance, such as **6 of 15 days**.
+- **Daily Detail:** dates, actual IN/OUT times, hours, attendance flags and notes. Leave and holidays have separate rows.
 
-Both tabs include Employee ID, using the company’s ID when supplied and the clock’s internal ID otherwise. Daily Detail follows the Summary’s employee order, with alternating shaded blocks. Click a name in the Summary to jump to that employee’s records, or use the detail filters to review a date or employee. Undated reference and override rows stay at the end of the relevant employee’s block.
+Both tabs use the company’s Employee ID, or the clock’s internal ID if none is supplied. Daily Detail groups each employee’s records in a shaded block, with undated rows at the end. Click a Summary name to jump to their detail, or filter by employee or date.
 
-Late and early flags apply after the configured grace. Actual punch times and recorded hours remain visible, alongside explanations such as an approved departure. Manager corrections and approval overrides appear in the report so payroll can see what was reviewed.
+Late and early flags retain the actual times, hours and notes. Corrections and approval overrides show what the manager reviewed.
 
-Worked hours and leave days are separate. Payroll determines compensation; the clock does not calculate wages. Summary hours add the rounded shift hours in the CSV. Email period totals use seconds and can differ slightly. A completed overnight shift belongs to the pay period containing its local IN date.
+Worked hours and leave days are separate. Summary hours add the rounded CSV shift hours; email totals use seconds and may differ slightly. An overnight shift belongs entirely to the pay period containing its local IN date.
 
-Changes after closing can require a new export revision. Earlier saved revisions remain unchanged, and each emailed workbook is generated from its saved revision.
+Changes after closing may require a new export. Saved revisions stay unchanged; emailed workbooks use the saved revision.
 
 ### Sample payroll reports
 
@@ -267,7 +259,7 @@ These previews use fictional employees for October 12–16, 2026. Click an image
 
 [![Sample Daily Detail with shifts, leave, holidays and manager corrections](payroll-daily-detail.png)](payroll-daily-detail.png)
 
-**Late arrival and early departure, close up:** Sarah arrived 12 minutes late on October 13 and left 60 minutes early on October 16. The report retains her actual times and hours, with “Traffic delay” and “Manager approved departure” beside the affected shifts.
+**Exceptions in detail:** Sarah arrived 12 minutes late on October 13 and left 60 minutes early on October 16. Her actual times, hours and explanations remain beside each shift.
 
 [![Daily Detail showing Sarah’s late arrival and approved early departure](payroll-exceptions.png)](payroll-exceptions.png)
 
@@ -289,12 +281,14 @@ For an upgrade, upload and extract the new ZIP, then rerun `./install-master.sh`
 
 ## Documentation
 
-Prewritten PDF manuals are provided for employees and managers:
+PDF manuals and templates:
 
 - [Employee guide](Timeclock-Employee-Guide.pdf)
 - [Manager guide](Timeclock-Manager-Guide.pdf)
 - [Build and install guide](Timeclock-Build-and-Install-Guide.pdf)
 - [Wall mounting template](Timeclock-Wall-Mounting-Template.pdf)
+
+Technical documentation:
 
 - [Installation and roles](docs/INSTALLATION.md)
 - [Manager operations](docs/OPERATIONS.md)
