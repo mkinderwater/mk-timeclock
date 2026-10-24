@@ -18,7 +18,7 @@ NAV = [
     ('Timesheets', [('corrections', '/punch-corrections', 'Punches and corrections'),
                     ('periods', '/pay-periods', 'Pay periods'),
                     ('review-links', '/review-links', 'Timesheet links'),
-                    ('time-off', '/time-off-requests', 'Time off requests'),
+                    ('time-off', '/time-off-requests', 'Vacation'),
                     ('export', '/attendance-export', 'Attendance export')]),
     ('People', [('employees', '/employees', 'Employees'),
                 ('cards', '/card-status', 'Card status'),

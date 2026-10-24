@@ -1,0 +1,33 @@
+{
+  "release": "1.9.5-RC3-cleanup10",
+  "baseline": "Exact attached mk-timeclock-lite-RC3-cleanup8(1).zip; read and compared byte-for-byte with cleanup8",
+  "schema": "No tables, columns, indexes or triggers added or removed; existing leave kinds retained for history",
+  "build": {
+    "server": "pass -Wall -Wextra -Werror on x86_64",
+    "mailer": "pass -Wall -Wextra -Werror on x86_64",
+    "agent": "Not rebuilt; code unchanged except version header"
+  },
+  "checks": {
+    "maintained_suite_with_browser": "45/47",
+    "new_vacation_only_workflow": "pass",
+    "manager_and_employee_forms": "pass at 320/390/1280px and existing mobile suite",
+    "notifications_and_duplicate_decision": "pass",
+    "template_upgrade_preserves_custom_content_and_enabled_flags": "pass",
+    "saved_revision_immutability_and_export_staleness": "pass",
+    "schema_unchanged": "pass",
+    "css_lint": "pass",
+    "source_preflight": "pass",
+    "served_inline_javascript": "99 scripts on 35 pages pass"
+  },
+  "known_failures": {
+    "scripts": [
+      "test_current_closed_period_upload_http.py",
+      "test_rc3_closed_period_attendance.py"
+    ],
+    "baseline": "Both reproduce the same missing overnight shift in private review detail on unchanged cleanup8; not introduced here"
+  },
+  "limits": [
+    "No physical Banana Pi or ARM acceptance run",
+    "Custom email wording is preserved and may still use the older terminology"
+  ]
+}

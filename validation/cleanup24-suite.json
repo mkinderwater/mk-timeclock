@@ -1,0 +1,277 @@
+{
+  "passed": 54,
+  "total": 54,
+  "browser_requested": false,
+  "results": [
+    {
+      "script": "test_cleanup_schema.py",
+      "passed": true,
+      "seconds": 0.15
+    },
+    {
+      "script": "test_shared_css.py",
+      "passed": true,
+      "seconds": 0.106
+    },
+    {
+      "script": "test_current_dispatch_sql.py",
+      "passed": true,
+      "seconds": 0.023
+    },
+    {
+      "script": "test_rc1_payday_lead.py",
+      "passed": true,
+      "seconds": 0.067
+    },
+    {
+      "script": "test_lite_attendance_mode.py",
+      "passed": true,
+      "seconds": 0.138
+    },
+    {
+      "script": "test_lite_delayed_mode_swipe.py",
+      "passed": true,
+      "seconds": 0.115
+    },
+    {
+      "script": "test_lite_card_ownership_history.py",
+      "passed": true,
+      "seconds": 0.114
+    },
+    {
+      "script": "test_lite_auto_periods.py",
+      "passed": true,
+      "seconds": 0.877
+    },
+    {
+      "script": "test_lite_no_historical_generation.py",
+      "passed": true,
+      "seconds": 0.223
+    },
+    {
+      "script": "test_lite_cycle_change_and_snapshot.py",
+      "passed": true,
+      "seconds": 0.112
+    },
+    {
+      "script": "test_rc2_schedule_validation.py",
+      "passed": true,
+      "seconds": 0.128
+    },
+    {
+      "script": "test_rc2_recurring_schedule.py",
+      "passed": true,
+      "seconds": 0.155
+    },
+    {
+      "script": "test_current_closed_period_upload_http.py",
+      "passed": true,
+      "seconds": 0.234
+    },
+    {
+      "script": "test_rc3_closed_period_attendance.py",
+      "passed": true,
+      "seconds": 0.166
+    },
+    {
+      "script": "test_rc2_signoff_reapproval_http.py",
+      "passed": true,
+      "seconds": 0.268
+    },
+    {
+      "script": "test_lite_employee_approval_http.py",
+      "passed": true,
+      "seconds": 0.327
+    },
+    {
+      "script": "test_lite_employee_links_http.py",
+      "passed": true,
+      "seconds": 0.151
+    },
+    {
+      "script": "test_lite_approval_no_confirmation_http.py",
+      "passed": true,
+      "seconds": 0.116
+    },
+    {
+      "script": "test_lite_snapshot_integrity.py",
+      "passed": true,
+      "seconds": 0.113
+    },
+    {
+      "script": "test_lite_install_identity.py",
+      "passed": true,
+      "seconds": 0.143
+    },
+    {
+      "script": "test_lite_restore_email_identity.py",
+      "passed": true,
+      "seconds": 0.103
+    },
+    {
+      "script": "test_rc3_vacation_allowance.py",
+      "passed": true,
+      "seconds": 0.395
+    },
+    {
+      "script": "test_rc3_send_time_settings.py",
+      "passed": true,
+      "seconds": 0.118
+    },
+    {
+      "script": "test_rc3_send_times.py",
+      "passed": true,
+      "seconds": 3.767
+    },
+    {
+      "script": "test_rc3_sender_name.py",
+      "passed": true,
+      "seconds": 0.763
+    },
+    {
+      "script": "test_lite_smtp_auth_identity.py",
+      "passed": true,
+      "seconds": 0.657
+    },
+    {
+      "script": "test_lite_smtp_rejection.py",
+      "passed": true,
+      "seconds": 0.656
+    },
+    {
+      "script": "test_lite_mailer_faults.py",
+      "passed": true,
+      "seconds": 0.687
+    },
+    {
+      "script": "test_rc3_revision_delivery.py",
+      "passed": true,
+      "seconds": 4.039
+    },
+    {
+      "script": "test_rc3_holiday_csv_revision_contract.py",
+      "passed": true,
+      "seconds": 0.022
+    },
+    {
+      "script": "test_rc3_backup_smtp.py",
+      "passed": true,
+      "seconds": 0.634
+    },
+    {
+      "script": "test_rc3_two_tab_workbook.py",
+      "passed": true,
+      "seconds": 0.097
+    },
+    {
+      "script": "test_rc3_workbook_edge_cases.py",
+      "passed": true,
+      "seconds": 0.105
+    },
+    {
+      "script": "test_rc3_workbook_note_limit.py",
+      "passed": true,
+      "seconds": 0.126
+    },
+    {
+      "script": "test_rc3_employee_detail_layout.py",
+      "passed": true,
+      "seconds": 0.246
+    },
+    {
+      "script": "test_rc3_frequency_http.py",
+      "passed": true,
+      "seconds": 0.117
+    },
+    {
+      "script": "test_rc3_shared_api.py",
+      "passed": true,
+      "seconds": 0.125
+    },
+    {
+      "script": "test_rc1_payroll_settings_fresh_http.py",
+      "passed": true,
+      "seconds": 0.111
+    },
+    {
+      "script": "test_rc1_inline_js.py",
+      "passed": true,
+      "seconds": 5.873
+    },
+    {
+      "script": "test_r18_gui_flags.py",
+      "passed": true,
+      "seconds": 0.133
+    },
+    {
+      "script": "test_lite_installer_manifest.py",
+      "passed": true,
+      "seconds": 0.026
+    },
+    {
+      "script": "test_rc1_tls_pem_boundaries.py",
+      "passed": true,
+      "seconds": 0.45
+    },
+    {
+      "script": "test_rc1_tls_status_permissions.py",
+      "passed": true,
+      "seconds": 0.041
+    },
+    {
+      "script": "test_rc2_period_list_performance.py",
+      "passed": true,
+      "seconds": 0.548
+    },
+    {
+      "script": "test_rc3_holiday_save.py",
+      "passed": true,
+      "seconds": 0.104
+    },
+    {
+      "script": "test_rc3_manager_timeoff.py",
+      "passed": true,
+      "seconds": 0.457
+    },
+    {
+      "script": "test_rc3_vacation_stat_overlap.py",
+      "passed": true,
+      "seconds": 0.42
+    },
+    {
+      "script": "test_rc3_vacation_history_http.py",
+      "passed": true,
+      "seconds": 0.186
+    },
+    {
+      "script": "test_rc3_vacation_only_approval.py",
+      "passed": true,
+      "seconds": 0.148
+    },
+    {
+      "script": "test_rc3_employee_identity.py",
+      "passed": true,
+      "seconds": 0.323
+    },
+    {
+      "script": "test_rc3_blank_employee_id.py",
+      "passed": true,
+      "seconds": 0.117
+    },
+    {
+      "script": "test_rc3_historical_approval.py",
+      "passed": true,
+      "seconds": 0.189
+    },
+    {
+      "script": "test_rc3_late_grace_status.py",
+      "passed": true,
+      "seconds": 0.176
+    },
+    {
+      "script": "test_rc3_early_departure.py",
+      "passed": true,
+      "seconds": 3.402
+    }
+  ]
+}

@@ -1,0 +1,283 @@
+{
+  "passed": 53,
+  "total": 53,
+  "browser_requested": true,
+  "results": [
+    {
+      "script": "test_cleanup_schema.py",
+      "passed": true,
+      "seconds": 0.516
+    },
+    {
+      "script": "test_shared_css.py",
+      "passed": true,
+      "seconds": 0.205
+    },
+    {
+      "script": "test_current_dispatch_sql.py",
+      "passed": true,
+      "seconds": 0.038
+    },
+    {
+      "script": "test_rc1_payday_lead.py",
+      "passed": true,
+      "seconds": 0.111
+    },
+    {
+      "script": "test_lite_attendance_mode.py",
+      "passed": true,
+      "seconds": 0.178
+    },
+    {
+      "script": "test_lite_delayed_mode_swipe.py",
+      "passed": true,
+      "seconds": 0.173
+    },
+    {
+      "script": "test_lite_card_ownership_history.py",
+      "passed": true,
+      "seconds": 0.167
+    },
+    {
+      "script": "test_lite_auto_periods.py",
+      "passed": true,
+      "seconds": 0.906
+    },
+    {
+      "script": "test_lite_no_historical_generation.py",
+      "passed": true,
+      "seconds": 0.217
+    },
+    {
+      "script": "test_lite_cycle_change_and_snapshot.py",
+      "passed": true,
+      "seconds": 0.132
+    },
+    {
+      "script": "test_rc2_schedule_validation.py",
+      "passed": true,
+      "seconds": 0.158
+    },
+    {
+      "script": "test_rc2_recurring_schedule.py",
+      "passed": true,
+      "seconds": 0.164
+    },
+    {
+      "script": "test_current_closed_period_upload_http.py",
+      "passed": true,
+      "seconds": 0.248
+    },
+    {
+      "script": "test_rc3_closed_period_attendance.py",
+      "passed": true,
+      "seconds": 0.205
+    },
+    {
+      "script": "test_rc2_signoff_reapproval_http.py",
+      "passed": true,
+      "seconds": 0.276,
+      "initial_error": "Traceback (most recent call last):\n  File \"/workspace/scratch/018156f1ed6a/vacation/tests/test_rc2_signoff_reapproval_http.py\", line 132, in <module>\n    approve(token3)\n  File \"/workspace/scratch/018156f1ed6a/vacation/tests/test_rc2_signoff_reapproval_http.py\", line 81, in approve\n    assert code == 200, (code, response)\n           ^^^^^^^^^^^\nAssertionError: (409, {'raw': '{\"error\":\"Vacation-only employees do not require timesheet approval.\"}'})",
+      "rerun_seconds": 0.383,
+      "rerun_output": "PASS: leave-only row, employee reapproval, manager reapproval, leave changes invalidate both signoffs"
+    },
+    {
+      "script": "test_lite_employee_approval_http.py",
+      "passed": true,
+      "seconds": 0.576
+    },
+    {
+      "script": "test_lite_employee_links_http.py",
+      "passed": true,
+      "seconds": 0.223,
+      "initial_error": "Traceback (most recent call last):\n  File \"/workspace/scratch/018156f1ed6a/vacation/tests/test_lite_employee_links_http.py\", line 39, in <module>\n    with urllib.request.urlopen(urllib.request.Request(url+'/review/'+a+'/approve',data=b'ack=yes',method='POST')) as r:\n         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/urllib/request.py\", line 215, in urlopen\n    return opener.open(url, data, timeout)\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/urllib/request.py\", line 521, in open\n    response = meth(req, response)\n               ^^^^^^^^^^^^^^^^^^^\n  File \"/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/urllib/request.py\", line 630, in http_response\n    response = self.parent.error(\n               ^^^^^^^^^^^^^^^^^^\n  File \"/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/urllib/request.py\", line 559, in error\n    return self._call_chain(*args)\n           ^^^^^^^^^^^^^^^^^^^^^^^\n  File \"/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/urllib/request.py\", line 492, in _call_chain\n    result = func(*args)\n             ^^^^^^^^^^^\n  File \"/opt/codex/runtimes/codex-primary-runtime/dependencies/python/lib/python3.12/urllib/request.py\", line 639, in http_error_default\n    raise HTTPError(req.full_url, code, msg, hdrs, fp)\nurllib.error.HTTPError: HTTP Error 409: Conflict",
+      "rerun_seconds": 0.206,
+      "rerun_output": "PASS live employee link isolation, expiry, no signoff, zero-punch vacation-only access"
+    },
+    {
+      "script": "test_lite_approval_no_confirmation_http.py",
+      "passed": true,
+      "seconds": 0.15
+    },
+    {
+      "script": "test_lite_snapshot_integrity.py",
+      "passed": true,
+      "seconds": 0.158
+    },
+    {
+      "script": "test_lite_install_identity.py",
+      "passed": true,
+      "seconds": 0.182
+    },
+    {
+      "script": "test_lite_restore_email_identity.py",
+      "passed": true,
+      "seconds": 0.148
+    },
+    {
+      "script": "test_rc3_vacation_allowance.py",
+      "passed": true,
+      "seconds": 0.701
+    },
+    {
+      "script": "test_rc3_send_time_settings.py",
+      "passed": true,
+      "seconds": 0.201
+    },
+    {
+      "script": "test_rc3_send_times.py",
+      "passed": true,
+      "seconds": 8.078
+    },
+    {
+      "script": "test_rc3_sender_name.py",
+      "passed": true,
+      "seconds": 0.899
+    },
+    {
+      "script": "test_lite_smtp_auth_identity.py",
+      "passed": true,
+      "seconds": 0.842
+    },
+    {
+      "script": "test_lite_smtp_rejection.py",
+      "passed": true,
+      "seconds": 0.935
+    },
+    {
+      "script": "test_lite_mailer_faults.py",
+      "passed": true,
+      "seconds": 1.075
+    },
+    {
+      "script": "test_rc3_revision_delivery.py",
+      "passed": true,
+      "seconds": 5.078
+    },
+    {
+      "script": "test_rc3_holiday_csv_revision_contract.py",
+      "passed": true,
+      "seconds": 0.055
+    },
+    {
+      "script": "test_rc3_backup_smtp.py",
+      "passed": true,
+      "seconds": 0.841
+    },
+    {
+      "script": "test_rc3_two_tab_workbook.py",
+      "passed": true,
+      "seconds": 0.189
+    },
+    {
+      "script": "test_rc3_workbook_edge_cases.py",
+      "passed": true,
+      "seconds": 0.151
+    },
+    {
+      "script": "test_rc3_workbook_note_limit.py",
+      "passed": true,
+      "seconds": 0.198
+    },
+    {
+      "script": "test_rc3_employee_detail_layout.py",
+      "passed": true,
+      "seconds": 0.405
+    },
+    {
+      "script": "test_rc3_frequency_http.py",
+      "passed": true,
+      "seconds": 0.162
+    },
+    {
+      "script": "test_rc3_shared_api.py",
+      "passed": true,
+      "seconds": 0.195
+    },
+    {
+      "script": "test_rc1_payroll_settings_fresh_http.py",
+      "passed": true,
+      "seconds": 0.16
+    },
+    {
+      "script": "test_rc1_inline_js.py",
+      "passed": true,
+      "seconds": 10.073
+    },
+    {
+      "script": "test_r18_gui_flags.py",
+      "passed": true,
+      "seconds": 0.22
+    },
+    {
+      "script": "test_lite_installer_manifest.py",
+      "passed": true,
+      "seconds": 0.048
+    },
+    {
+      "script": "test_rc1_tls_pem_boundaries.py",
+      "passed": true,
+      "seconds": 5.211
+    },
+    {
+      "script": "test_rc1_tls_status_permissions.py",
+      "passed": true,
+      "seconds": 0.313
+    },
+    {
+      "script": "test_rc2_period_list_performance.py",
+      "passed": true,
+      "seconds": 2.536
+    },
+    {
+      "script": "test_rc3_holiday_save.py",
+      "passed": true,
+      "seconds": 0.139
+    },
+    {
+      "script": "test_rc3_manager_timeoff.py",
+      "passed": true,
+      "seconds": 0.784
+    },
+    {
+      "script": "test_rc3_vacation_stat_overlap.py",
+      "passed": true,
+      "seconds": 0.939
+    },
+    {
+      "script": "test_rc3_vacation_history_http.py",
+      "passed": true,
+      "seconds": 0.29
+    },
+    {
+      "script": "test_rc3_vacation_only_approval.py",
+      "passed": true,
+      "seconds": 0.21
+    },
+    {
+      "script": "test_rc3_mobile_browser.py",
+      "passed": true,
+      "seconds": 23.187
+    },
+    {
+      "script": "test_rc3_manager_timeoff_browser.py",
+      "passed": true,
+      "seconds": 1.837
+    },
+    {
+      "script": "test_rc3_vacation_stat_browser.py",
+      "passed": true,
+      "seconds": 2.353
+    },
+    {
+      "script": "test_rc3_vacation_history_browser.py",
+      "passed": true,
+      "seconds": 2.042
+    }
+  ],
+  "initial_run": {
+    "passed": 51,
+    "total": 53,
+    "note": "Two fixtures still expected vacation-only employee approval. Updated those expectations while retaining punch-required reapproval coverage."
+  }
+}

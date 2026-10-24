@@ -1,0 +1,233 @@
+{
+  "scenario": "Northstar Services Ltd, Oct 1-15 2026",
+  "source": "mk-timeclock Lite RC3",
+  "passed": 44,
+  "total": 44,
+  "checks": [
+    {
+      "test": "healthy running HTTP server",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "Standard email uses company employee ID",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "Standard email body retains previous vacation",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "revision 1 created by authenticated manager API",
+      "passed": true,
+      "detail": "{'revision': 1}"
+    },
+    {
+      "test": "punch-required worker in CSV",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "all CSV rows keep their columns",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "notification reason CSV escaped and employee ID retained",
+      "passed": true,
+      "detail": "[{'Employee': 'Sarah Chen', 'RFID ID': '', 'Date': '', 'IN': '', 'OUT': '', 'Worked minutes': '0', 'Reason / correction': 'Reviewed with manager', 'Status': 'Manager override without employee confirmation; No email, said \"later\" recipient unavailable', 'Worked hours': '', 'Employee ID': '2'}]"
+    },
+    {
+      "test": "vacation-only employee listed as leave",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "sick absence appears",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "stat holiday appears",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "later hire excluded from earlier holiday",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "former employee retains earlier holiday",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "Robert Taylor holiday exported without punches",
+      "passed": true,
+      "detail": "[{'Employee': 'Robert Taylor', 'RFID ID': '', 'Date': '2026-10-12', 'IN': '', 'OUT': '', 'Worked minutes': '0', 'Reason / correction': '', 'Status': 'Stat holiday: Thanksgiving', 'Worked hours': '0.00', 'Employee ID': '7'}]"
+    },
+    {
+      "test": "Olivia Martin holiday exported without punches",
+      "passed": true,
+      "detail": "[{'Employee': 'Olivia Martin', 'RFID ID': '', 'Date': '2026-10-12', 'IN': '', 'OUT': '', 'Worked minutes': '0', 'Reason / correction': '', 'Status': 'Stat holiday: Thanksgiving', 'Worked hours': '0.00', 'Employee ID': '8'}]"
+    },
+    {
+      "test": "off-schedule holiday during approved vacation retained exactly once",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "vacation-only leave without schedule qualifier",
+      "passed": true,
+      "detail": "[{'Employee': 'Robert Taylor', 'RFID ID': '', 'Date': '2026-10-13', 'IN': '', 'OUT': '', 'Worked minutes': '0', 'Reason / correction': '', 'Status': 'Approved vacation', 'Worked hours': '0.00', 'Employee ID': '7'}, {'Employee': 'Robert Taylor', 'RFID ID': '', 'Date': '2026-10-14', 'IN': '', 'OUT': '', 'Worked minutes': '0', 'Reason / correction': '', 'Status': 'Approved vacation', 'Worked hours': '0.00', 'Employee ID': '7'}, {'Employee': 'Robert Taylor', 'RFID ID': '', 'Date': '2026-10-15', 'IN': '', 'OUT': '', 'Worked minutes': '0', 'Reason / correction': '', 'Status': 'Approved vacation', 'Worked hours': '0.00', 'Employee ID': '7'}]"
+    },
+    {
+      "test": "pending vacation excluded",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "IN/OUT elapsed time without break deduction",
+      "passed": true,
+      "detail": "[{'Employee': 'Sarah Chen', 'RFID ID': 'CARD02', 'Date': '2026-10-02', 'IN': '08:12', 'OUT': '16:30', 'Worked minutes': '498', 'Reason / correction': 'Late arrival: 12 min', 'Status': 'Complete - late arrival', 'Worked hours': '8.30', 'Employee ID': '2'}]"
+    },
+    {
+      "test": "late arrival retained in payroll source",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "revision 1 valid XLSX",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "revision 1 byte-identical on re-download",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "unchanged duplicate revision rejected",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "export does not queue email",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "changed records generate revision 2",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "revision 1 remains immutable",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "revision 2 changes source data",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "revised export does not email",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "revision 1 XLSX unchanged after revision 2",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "sent historical period stale on initial list",
+      "passed": true,
+      "detail": "{'id': 4, 'starts': '2026-10-01', 'ends': '2026-10-15', 'status': 'closed', 'closed_at': '', 'approval_total': 6, 'manager_signoffs': 1, 'has_activity': True, 'changed_after_close': True, 'latest_revision': 2, 'export_stale': True, 'new_export_required': True, 'export_check_failed': False}"
+    },
+    {
+      "test": "revision 3 saved",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "saved revision clears export warning",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "mailer queue pass completed while original pending",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "blocked revision request retained",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "revision not queued ahead of pending original",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "revision 3 delivered by SMTP",
+      "passed": true,
+      "detail": "('sent', 'Employee,RFID ID,Date,IN,OUT,Worked minutes,Reason / correction,Status,Worked hours,Employee ID\\r\\n\"David Miller\",\"CARD03\",\"2026-10-02\",\"09:00\",\"17:00\",480,\"\",\"Complete\",8.00,3\\r\\n\"Emily Wilson\",\"CARD06\",\"2026-10-02\",\"08:30\",\"16:30\",480,\"\",\"Complete\",8.00,6\\r\\n\"James Lee\",\"CARD09\",\"2026-10-02\",\"10:00\",\"18:00\",480,\"\",\"Complete\",8.00,9\\r\\n\"Jessica Brown\",\"CARD04\",\"2026-10-08\",\"07:02\",\"15:10\",488,\"\",\"Complete\",8.13,4\\r\\n\"Michael Ross\",\"CARD05\",\"2026-10-02\",\"08:00\",\"16:00\",480,\"\",\"Complete\",8.00,\"EMP-005\"\\r\\n\"Michael Ross\",\"CARD05\",\"2026-10-05\",\"09:30\",\"10:30\",60,\"\",\"Complete\",1.00,\"EMP-005\"\\r\\n\"Sarah Chen\",\"CARD02\",\"2026-10-02\",\"08:12\",\"16:30\",498,\"Late arrival: 12 min\",\"Complete - late arrival\",8.30,2\\r\\n\"Sarah Chen\",\"\",,,,0,\"Reviewed with manager\",\"Manager override without employee confirmation; No email, said \"\"later\"\" recipient unavailable\",,2\\r\\n\"David Miller\",\"\",\"2026-10-05\",,,0,\"\",\"Recorded absence: Sick\",0.00,3\\r\\n\"David Miller\",\"\",\"2026-10-12\",,,0,,\"Stat holiday: Thanksgiving corrected\",0.00,3\\r\\n\"James Lee\",\"\",\"2026-10-12\",,,0,,\"Stat holiday: Thanksgiving corrected\",0.00,9\\r\\n\"Jessica Brown\",\"\",\"2026-10-12\",,,0,,\"Stat holiday: Thanksgiving corrected\",0.00,4\\r\\n\"Karen Manager\",\"\",\"2026-10-12\",,,0,,\"Stat holiday: Thanksgiving corrected\",0.00,1\\r\\n\"Michael Ross\",\"\",\"2026-10-12\",,,0,,\"Stat holiday: Thanksgiving corrected\",0.00,\"EMP-005\"\\r\\n\"Olivia Martin\",\"\",\"2026-10-12\",,,0,,\"Stat holiday: Thanksgiving corrected\",0.00,8\\r\\n\"Paul Former\",\"\",\"2026-10-12\",,,0,,\"Stat holiday: Thanksgiving corrected\",0.00,11\\r\\n\"Robert Taylor\",\"\",\"2026-10-12\",,,0,,\"Stat holiday: Thanksgiving corrected\",0.00,7\\r\\n\"Sarah Chen\",\"\",\"2026-10-12\",,,0,,\"Stat holiday: Thanksgiving corrected\",0.00,2\\r\\n\"Robert Taylor\",\"\",,,,0,,\"Previous approved vacation day: 2026-09-28 (reference only)\",0.00,7\\r\\n\"Emily Wilson\",\"\",\"2026-10-12\",,,0,,\"Stat holiday (not vacation): Thanksgiving corrected - no shift scheduled\",0.00,6\\r\\n\"Robert Taylor\",\"\",\"2026-10-13\",,,0,,\"Approved vacation\",0.00,7\\r\\n\"Robert Taylor\",\"\",\"2026-10-14\",,,0,,\"Approved vacation\",0.00,7\\r\\n\"Robert Taylor\",\"\",\"2026-10-15\",,,0,,\"Approved vacation\",0.00,7\\r\\n\"Robert Taylor\",,,,,0,,\"Annual vacation 2026: 4 of unspecified days used\",0.00,7\\r\\n')"
+    },
+    {
+      "test": "SMTP sender display name correct",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "SMTP recipient correct",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "SMTP workbook byte-identical to saved revision download",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "Previous vacation excluded from Excel",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "SMTP workbook retains company employee ID",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "queued source exactly saved revision",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "duplicate revision request rejected",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "unchanged revision delivered once",
+      "passed": true,
+      "detail": ""
+    },
+    {
+      "test": "request removed after latest revision queued",
+      "passed": true,
+      "detail": ""
+    }
+  ],
+  "limitations": [
+    "Historical punches, manager corrections, leave and holiday records seeded through SQLite, not RFID hardware or full manager workflows",
+    "SMTP verified against local test relay; no backup/restore, dual-clock offline synchronization or physical hardware verification",
+    "One revision change simulated through direct database inserts rather than manager correction HTTP endpoint"
+  ]
+}

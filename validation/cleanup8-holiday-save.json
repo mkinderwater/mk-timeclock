@@ -1,0 +1,14 @@
+{
+  "release": "1.9.5-RC3-cleanup8",
+  "checks": {
+    "actual_save_handler_success": "pass",
+    "actual_save_handler_rejection": "pass",
+    "submitted_calendar_and_skip": "pass",
+    "css_lint": "pass",
+    "source_preflight": "pass"
+  },
+  "limits": [
+    "No compilation: missing SQLite development headers",
+    "No live browser/device or full suite run"
+  ]
+}

@@ -1,0 +1,254 @@
+{
+  "passed": 47,
+  "total": 49,
+  "browser_requested": true,
+  "results": [
+    {
+      "script": "test_cleanup_schema.py",
+      "passed": true,
+      "seconds": 0.192
+    },
+    {
+      "script": "test_current_dispatch_sql.py",
+      "passed": true,
+      "seconds": 0.033
+    },
+    {
+      "script": "test_rc1_payday_lead.py",
+      "passed": true,
+      "seconds": 0.155
+    },
+    {
+      "script": "test_lite_attendance_mode.py",
+      "passed": true,
+      "seconds": 0.178
+    },
+    {
+      "script": "test_lite_delayed_mode_swipe.py",
+      "passed": true,
+      "seconds": 0.158
+    },
+    {
+      "script": "test_lite_card_ownership_history.py",
+      "passed": true,
+      "seconds": 0.221
+    },
+    {
+      "script": "test_lite_auto_periods.py",
+      "passed": true,
+      "seconds": 0.906
+    },
+    {
+      "script": "test_lite_no_historical_generation.py",
+      "passed": true,
+      "seconds": 0.235
+    },
+    {
+      "script": "test_lite_cycle_change_and_snapshot.py",
+      "passed": true,
+      "seconds": 0.203
+    },
+    {
+      "script": "test_rc2_schedule_validation.py",
+      "passed": true,
+      "seconds": 0.196
+    },
+    {
+      "script": "test_rc2_recurring_schedule.py",
+      "passed": true,
+      "seconds": 0.225
+    },
+    {
+      "script": "test_current_closed_period_upload_http.py",
+      "passed": false,
+      "seconds": 0.185,
+      "error": "Traceback (most recent call last):\n  File \"/workspace/scratch/018156f1ed6a/vacation/tests/test_current_closed_period_upload_http.py\", line 46, in <module>\n    assert code==200 and detail['seconds']==28800 and len(detail['entries'])==1 and detail['entries'][0]['state']=='complete' and detail['entries'][0]['out_at'] and detail['entries'][0]['out_manual'] and 'Night shift entry' in detail['entries'][0]['out_note'],detail\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: {'id': 4, 'starts': '2026-09-07', 'ends': '2026-09-21', 'status': 'open', 'signed': False, 'ready': True, 'vacation_only': False, 'punches': 0, 'seconds': 0, 'entries': [], 'context': []}"
+    },
+    {
+      "script": "test_rc3_closed_period_attendance.py",
+      "passed": false,
+      "seconds": 0.239,
+      "error": "Traceback (most recent call last):\n  File \"/workspace/scratch/018156f1ed6a/vacation/tests/test_rc3_closed_period_attendance.py\", line 46, in <module>\n    assert code==200 and detail['seconds']==28800 and len(detail['entries'])==1 and detail['entries'][0]['state']=='complete' and detail['entries'][0]['out_at'] and detail['entries'][0]['out_manual'] and 'Night shift entry' in detail['entries'][0]['out_note'],detail\n           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^\nAssertionError: {'id': 4, 'starts': '2026-09-07', 'ends': '2026-09-21', 'status': 'open', 'signed': False, 'ready': True, 'vacation_only': False, 'punches': 0, 'seconds': 0, 'entries': [], 'context': []}"
+    },
+    {
+      "script": "test_rc2_signoff_reapproval_http.py",
+      "passed": true,
+      "seconds": 0.369
+    },
+    {
+      "script": "test_lite_employee_approval_http.py",
+      "passed": true,
+      "seconds": 0.647
+    },
+    {
+      "script": "test_lite_employee_links_http.py",
+      "passed": true,
+      "seconds": 0.207
+    },
+    {
+      "script": "test_lite_approval_no_confirmation_http.py",
+      "passed": true,
+      "seconds": 0.174
+    },
+    {
+      "script": "test_lite_snapshot_integrity.py",
+      "passed": true,
+      "seconds": 0.145
+    },
+    {
+      "script": "test_lite_install_identity.py",
+      "passed": true,
+      "seconds": 0.215
+    },
+    {
+      "script": "test_lite_restore_email_identity.py",
+      "passed": true,
+      "seconds": 0.163
+    },
+    {
+      "script": "test_rc3_vacation_allowance.py",
+      "passed": true,
+      "seconds": 0.769
+    },
+    {
+      "script": "test_rc3_send_time_settings.py",
+      "passed": true,
+      "seconds": 0.178
+    },
+    {
+      "script": "test_rc3_send_times.py",
+      "passed": true,
+      "seconds": 6.664
+    },
+    {
+      "script": "test_rc3_sender_name.py",
+      "passed": true,
+      "seconds": 0.841
+    },
+    {
+      "script": "test_lite_smtp_auth_identity.py",
+      "passed": true,
+      "seconds": 0.72
+    },
+    {
+      "script": "test_lite_smtp_rejection.py",
+      "passed": true,
+      "seconds": 0.748
+    },
+    {
+      "script": "test_lite_mailer_faults.py",
+      "passed": true,
+      "seconds": 0.745
+    },
+    {
+      "script": "test_rc3_revision_delivery.py",
+      "passed": true,
+      "seconds": 4.273
+    },
+    {
+      "script": "test_rc3_holiday_csv_revision_contract.py",
+      "passed": true,
+      "seconds": 0.039
+    },
+    {
+      "script": "test_rc3_backup_smtp.py",
+      "passed": true,
+      "seconds": 0.754
+    },
+    {
+      "script": "test_rc3_two_tab_workbook.py",
+      "passed": true,
+      "seconds": 0.305
+    },
+    {
+      "script": "test_rc3_workbook_edge_cases.py",
+      "passed": true,
+      "seconds": 0.196
+    },
+    {
+      "script": "test_rc3_workbook_note_limit.py",
+      "passed": true,
+      "seconds": 0.187
+    },
+    {
+      "script": "test_rc3_employee_detail_layout.py",
+      "passed": true,
+      "seconds": 0.398
+    },
+    {
+      "script": "test_rc3_frequency_http.py",
+      "passed": true,
+      "seconds": 0.182
+    },
+    {
+      "script": "test_rc3_shared_api.py",
+      "passed": true,
+      "seconds": 0.228
+    },
+    {
+      "script": "test_rc1_payroll_settings_fresh_http.py",
+      "passed": true,
+      "seconds": 0.187
+    },
+    {
+      "script": "test_rc1_inline_js.py",
+      "passed": true,
+      "seconds": 11.015
+    },
+    {
+      "script": "test_r18_gui_flags.py",
+      "passed": true,
+      "seconds": 0.264
+    },
+    {
+      "script": "test_lite_installer_manifest.py",
+      "passed": true,
+      "seconds": 0.062
+    },
+    {
+      "script": "test_rc1_tls_pem_boundaries.py",
+      "passed": true,
+      "seconds": 0.664
+    },
+    {
+      "script": "test_rc1_tls_status_permissions.py",
+      "passed": true,
+      "seconds": 0.088
+    },
+    {
+      "script": "test_rc2_period_list_performance.py",
+      "passed": true,
+      "seconds": 1.024
+    },
+    {
+      "script": "test_rc3_holiday_save.py",
+      "passed": true,
+      "seconds": 0.195
+    },
+    {
+      "script": "test_rc3_manager_timeoff.py",
+      "passed": true,
+      "seconds": 1.016
+    },
+    {
+      "script": "test_rc3_vacation_stat_overlap.py",
+      "passed": true,
+      "seconds": 0.915
+    },
+    {
+      "script": "test_rc3_mobile_browser.py",
+      "passed": true,
+      "seconds": 11.458
+    },
+    {
+      "script": "test_rc3_manager_timeoff_browser.py",
+      "passed": true,
+      "seconds": 2.004
+    },
+    {
+      "script": "test_rc3_vacation_stat_browser.py",
+      "passed": true,
+      "seconds": 3.245
+    }
+  ]
+}

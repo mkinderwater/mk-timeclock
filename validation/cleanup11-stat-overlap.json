@@ -1,0 +1,34 @@
+{
+  "release": "1.9.5-RC3-cleanup11",
+  "baseline": "cleanup10",
+  "changes": [
+    "Shared named holiday metadata for previews and history",
+    "Current vacation/stat counts while retaining original requested count",
+    "Named stat-only errors for employee and manager",
+    "Holiday precedence in employee review context; weekly/dated schedule alignment",
+    "Holiday subtext in employee timesheet",
+    "Existing payroll labels and saved revisions preserved"
+  ],
+  "schema": "No changes",
+  "checks": {
+    "server_compile_werror": "pass on x86_64",
+    "mailer": "unchanged; existing checks pass",
+    "suite": "47/49 including 3 browser scripts",
+    "new_stat_http_acceptance": "pass",
+    "new_stat_browser_acceptance": "pass at 390/1280px",
+    "existing_mobile_workflows": "pass at 320/390px",
+    "lint": "pass",
+    "preflight": "pass"
+  },
+  "known_failures": {
+    "scripts": [
+      "test_current_closed_period_upload_http.py",
+      "test_rc3_closed_period_attendance.py"
+    ],
+    "baseline": "Same overnight private-review failures reproduced previously on unchanged cleanup8 and present in cleanup10"
+  },
+  "limitations": [
+    "No ARM/physical clock acceptance",
+    "Agent unchanged apart from version header and not rebuilt here"
+  ]
+}

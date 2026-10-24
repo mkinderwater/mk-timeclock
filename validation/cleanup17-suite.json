@@ -1,0 +1,281 @@
+{
+  "passed": 52,
+  "total": 52,
+  "browser_requested": true,
+  "results": [
+    {
+      "script": "test_cleanup_schema.py",
+      "passed": true,
+      "seconds": 0.222
+    },
+    {
+      "script": "test_shared_css.py",
+      "passed": true,
+      "seconds": 0.212
+    },
+    {
+      "script": "test_current_dispatch_sql.py",
+      "passed": true,
+      "seconds": 0.048
+    },
+    {
+      "script": "test_rc1_payday_lead.py",
+      "passed": true,
+      "seconds": 0.134
+    },
+    {
+      "script": "test_lite_attendance_mode.py",
+      "passed": true,
+      "seconds": 0.179
+    },
+    {
+      "script": "test_lite_delayed_mode_swipe.py",
+      "passed": true,
+      "seconds": 0.157
+    },
+    {
+      "script": "test_lite_card_ownership_history.py",
+      "passed": true,
+      "seconds": 0.176
+    },
+    {
+      "script": "test_lite_auto_periods.py",
+      "passed": true,
+      "seconds": 0.907
+    },
+    {
+      "script": "test_lite_no_historical_generation.py",
+      "passed": true,
+      "seconds": 0.233
+    },
+    {
+      "script": "test_lite_cycle_change_and_snapshot.py",
+      "passed": true,
+      "seconds": 0.17
+    },
+    {
+      "script": "test_rc2_schedule_validation.py",
+      "passed": true,
+      "seconds": 0.169
+    },
+    {
+      "script": "test_rc2_recurring_schedule.py",
+      "passed": true,
+      "seconds": 0.174
+    },
+    {
+      "script": "test_current_closed_period_upload_http.py",
+      "passed": true,
+      "seconds": 0.243
+    },
+    {
+      "script": "test_rc3_closed_period_attendance.py",
+      "passed": true,
+      "seconds": 0.242
+    },
+    {
+      "script": "test_rc2_signoff_reapproval_http.py",
+      "passed": true,
+      "seconds": 0.323
+    },
+    {
+      "script": "test_lite_employee_approval_http.py",
+      "passed": true,
+      "seconds": 0.656
+    },
+    {
+      "script": "test_lite_employee_links_http.py",
+      "passed": true,
+      "seconds": 0.227
+    },
+    {
+      "script": "test_lite_approval_no_confirmation_http.py",
+      "passed": true,
+      "seconds": 0.181
+    },
+    {
+      "script": "test_lite_snapshot_integrity.py",
+      "passed": true,
+      "seconds": 0.155
+    },
+    {
+      "script": "test_lite_install_identity.py",
+      "passed": true,
+      "seconds": 0.218
+    },
+    {
+      "script": "test_lite_restore_email_identity.py",
+      "passed": true,
+      "seconds": 0.257
+    },
+    {
+      "script": "test_rc3_vacation_allowance.py",
+      "passed": true,
+      "seconds": 0.676
+    },
+    {
+      "script": "test_rc3_send_time_settings.py",
+      "passed": true,
+      "seconds": 0.162
+    },
+    {
+      "script": "test_rc3_send_times.py",
+      "passed": true,
+      "seconds": 6.613
+    },
+    {
+      "script": "test_rc3_sender_name.py",
+      "passed": true,
+      "seconds": 0.824
+    },
+    {
+      "script": "test_lite_smtp_auth_identity.py",
+      "passed": true,
+      "seconds": 0.732
+    },
+    {
+      "script": "test_lite_smtp_rejection.py",
+      "passed": true,
+      "seconds": 0.716
+    },
+    {
+      "script": "test_lite_mailer_faults.py",
+      "passed": true,
+      "seconds": 0.719
+    },
+    {
+      "script": "test_rc3_revision_delivery.py",
+      "passed": true,
+      "seconds": 4.343
+    },
+    {
+      "script": "test_rc3_holiday_csv_revision_contract.py",
+      "passed": true,
+      "seconds": 0.069
+    },
+    {
+      "script": "test_rc3_backup_smtp.py",
+      "passed": true,
+      "seconds": 0.92
+    },
+    {
+      "script": "test_rc3_two_tab_workbook.py",
+      "passed": true,
+      "seconds": 0.151
+    },
+    {
+      "script": "test_rc3_workbook_edge_cases.py",
+      "passed": true,
+      "seconds": 0.191
+    },
+    {
+      "script": "test_rc3_workbook_note_limit.py",
+      "passed": true,
+      "seconds": 0.264
+    },
+    {
+      "script": "test_rc3_employee_detail_layout.py",
+      "passed": true,
+      "seconds": 0.368
+    },
+    {
+      "script": "test_rc3_frequency_http.py",
+      "passed": true,
+      "seconds": 0.163
+    },
+    {
+      "script": "test_rc3_shared_api.py",
+      "passed": true,
+      "seconds": 0.204
+    },
+    {
+      "script": "test_rc1_payroll_settings_fresh_http.py",
+      "passed": true,
+      "seconds": 0.147
+    },
+    {
+      "script": "test_rc1_inline_js.py",
+      "passed": true,
+      "seconds": 10.22
+    },
+    {
+      "script": "test_r18_gui_flags.py",
+      "passed": true,
+      "seconds": 0.221
+    },
+    {
+      "script": "test_lite_installer_manifest.py",
+      "passed": true,
+      "seconds": 0.042
+    },
+    {
+      "script": "test_rc1_tls_pem_boundaries.py",
+      "passed": true,
+      "seconds": 0.629
+    },
+    {
+      "script": "test_rc1_tls_status_permissions.py",
+      "passed": true,
+      "seconds": 0.097
+    },
+    {
+      "script": "test_rc2_period_list_performance.py",
+      "passed": true,
+      "seconds": 0.733
+    },
+    {
+      "script": "test_rc3_holiday_save.py",
+      "passed": true,
+      "seconds": 0.191
+    },
+    {
+      "script": "test_rc3_manager_timeoff.py",
+      "passed": true,
+      "seconds": 0.98
+    },
+    {
+      "script": "test_rc3_vacation_stat_overlap.py",
+      "passed": true,
+      "seconds": 0.984
+    },
+    {
+      "script": "test_rc3_vacation_history_http.py",
+      "passed": true,
+      "seconds": 0.348
+    },
+    {
+      "script": "test_rc3_mobile_browser.py",
+      "passed": true,
+      "seconds": 27.132
+    },
+    {
+      "script": "test_rc3_manager_timeoff_browser.py",
+      "passed": true,
+      "seconds": 1.853
+    },
+    {
+      "script": "test_rc3_vacation_stat_browser.py",
+      "passed": true,
+      "seconds": 2.862
+    },
+    {
+      "script": "test_rc3_vacation_history_browser.py",
+      "passed": true,
+      "seconds": 2.434
+    }
+  ],
+  "supplemental_reruns": [
+    {
+      "script": "test_rc3_employee_detail_layout.py",
+      "passed": true,
+      "detail": "Expanded reference-only workbook assertion"
+    },
+    {
+      "script": "test_rc3_revision_delivery.py",
+      "passed": true,
+      "checks_passed": 42,
+      "checks_total": 42,
+      "detail": "Expanded standard-body and SMTP attachment assertions"
+    }
+  ]
+}

@@ -1,0 +1,443 @@
+{
+  "pages": 29,
+  "checks": 87,
+  "errors": [],
+  "results": [
+    {
+      "route": "/",
+      "width": 320,
+      "failures": []
+    },
+    {
+      "route": "/presence",
+      "width": 320,
+      "failures": []
+    },
+    {
+      "route": "/rejected-cards",
+      "width": 320,
+      "failures": []
+    },
+    {
+      "route": "/punch-corrections",
+      "width": 320,
+      "failures": []
+    },
+    {
+      "route": "/pay-periods",
+      "width": 320,
+      "failures": []
+    },
+    {
+      "route": "/review-links",
+      "width": 320,
+      "failures": []
+    },
+    {
+      "route": "/time-off-requests",
+      "width": 320,
+      "failures": []
+    },
+    {
+      "route": "/attendance-export",
+      "width": 320,
+      "failures": []
+    },
+    {
+      "route": "/employees",
+      "width": 320,
+      "failures": []
+    },
+    {
+      "route": "/card-status",
+      "width": 320,
+      "failures": []
+    },
+    {
+      "route": "/manager-cards",
+      "width": 320,
+      "failures": []
+    },
+    {
+      "route": "/accounts",
+      "width": 320,
+      "failures": []
+    },
+    {
+      "route": "/schedules",
+      "width": 320,
+      "failures": []
+    },
+    {
+      "route": "/payroll",
+      "width": 320,
+      "failures": []
+    },
+    {
+      "route": "/holidays",
+      "width": 320,
+      "failures": []
+    },
+    {
+      "route": "/clock-grace",
+      "width": 320,
+      "failures": []
+    },
+    {
+      "route": "/display",
+      "width": 320,
+      "failures": []
+    },
+    {
+      "route": "/email-templates",
+      "width": 320,
+      "failures": []
+    },
+    {
+      "route": "/smtp",
+      "width": 320,
+      "failures": []
+    },
+    {
+      "route": "/email-queue",
+      "width": 320,
+      "failures": []
+    },
+    {
+      "route": "/ntp",
+      "width": 320,
+      "failures": []
+    },
+    {
+      "route": "/tls",
+      "width": 320,
+      "failures": []
+    },
+    {
+      "route": "/device-health",
+      "width": 320,
+      "failures": []
+    },
+    {
+      "route": "/backups",
+      "width": 320,
+      "failures": []
+    },
+    {
+      "route": "/rejected-uploads",
+      "width": 320,
+      "failures": []
+    },
+    {
+      "route": "/diagnostics",
+      "width": 320,
+      "failures": []
+    },
+    {
+      "route": "/audit",
+      "width": 320,
+      "failures": []
+    },
+    {
+      "route": "/clocks",
+      "width": 320,
+      "failures": []
+    },
+    {
+      "route": "/system",
+      "width": 320,
+      "failures": []
+    },
+    {
+      "route": "/",
+      "width": 390,
+      "failures": []
+    },
+    {
+      "route": "/presence",
+      "width": 390,
+      "failures": []
+    },
+    {
+      "route": "/rejected-cards",
+      "width": 390,
+      "failures": []
+    },
+    {
+      "route": "/punch-corrections",
+      "width": 390,
+      "failures": []
+    },
+    {
+      "route": "/pay-periods",
+      "width": 390,
+      "failures": []
+    },
+    {
+      "route": "/review-links",
+      "width": 390,
+      "failures": []
+    },
+    {
+      "route": "/time-off-requests",
+      "width": 390,
+      "failures": []
+    },
+    {
+      "route": "/attendance-export",
+      "width": 390,
+      "failures": []
+    },
+    {
+      "route": "/employees",
+      "width": 390,
+      "failures": []
+    },
+    {
+      "route": "/card-status",
+      "width": 390,
+      "failures": []
+    },
+    {
+      "route": "/manager-cards",
+      "width": 390,
+      "failures": []
+    },
+    {
+      "route": "/accounts",
+      "width": 390,
+      "failures": []
+    },
+    {
+      "route": "/schedules",
+      "width": 390,
+      "failures": []
+    },
+    {
+      "route": "/payroll",
+      "width": 390,
+      "failures": []
+    },
+    {
+      "route": "/holidays",
+      "width": 390,
+      "failures": []
+    },
+    {
+      "route": "/clock-grace",
+      "width": 390,
+      "failures": []
+    },
+    {
+      "route": "/display",
+      "width": 390,
+      "failures": []
+    },
+    {
+      "route": "/email-templates",
+      "width": 390,
+      "failures": []
+    },
+    {
+      "route": "/smtp",
+      "width": 390,
+      "failures": []
+    },
+    {
+      "route": "/email-queue",
+      "width": 390,
+      "failures": []
+    },
+    {
+      "route": "/ntp",
+      "width": 390,
+      "failures": []
+    },
+    {
+      "route": "/tls",
+      "width": 390,
+      "failures": []
+    },
+    {
+      "route": "/device-health",
+      "width": 390,
+      "failures": []
+    },
+    {
+      "route": "/backups",
+      "width": 390,
+      "failures": []
+    },
+    {
+      "route": "/rejected-uploads",
+      "width": 390,
+      "failures": []
+    },
+    {
+      "route": "/diagnostics",
+      "width": 390,
+      "failures": []
+    },
+    {
+      "route": "/audit",
+      "width": 390,
+      "failures": []
+    },
+    {
+      "route": "/clocks",
+      "width": 390,
+      "failures": []
+    },
+    {
+      "route": "/system",
+      "width": 390,
+      "failures": []
+    },
+    {
+      "route": "/",
+      "width": 1280,
+      "failures": []
+    },
+    {
+      "route": "/presence",
+      "width": 1280,
+      "failures": []
+    },
+    {
+      "route": "/rejected-cards",
+      "width": 1280,
+      "failures": []
+    },
+    {
+      "route": "/punch-corrections",
+      "width": 1280,
+      "failures": []
+    },
+    {
+      "route": "/pay-periods",
+      "width": 1280,
+      "failures": []
+    },
+    {
+      "route": "/review-links",
+      "width": 1280,
+      "failures": []
+    },
+    {
+      "route": "/time-off-requests",
+      "width": 1280,
+      "failures": []
+    },
+    {
+      "route": "/attendance-export",
+      "width": 1280,
+      "failures": []
+    },
+    {
+      "route": "/employees",
+      "width": 1280,
+      "failures": []
+    },
+    {
+      "route": "/card-status",
+      "width": 1280,
+      "failures": []
+    },
+    {
+      "route": "/manager-cards",
+      "width": 1280,
+      "failures": []
+    },
+    {
+      "route": "/accounts",
+      "width": 1280,
+      "failures": []
+    },
+    {
+      "route": "/schedules",
+      "width": 1280,
+      "failures": []
+    },
+    {
+      "route": "/payroll",
+      "width": 1280,
+      "failures": []
+    },
+    {
+      "route": "/holidays",
+      "width": 1280,
+      "failures": []
+    },
+    {
+      "route": "/clock-grace",
+      "width": 1280,
+      "failures": []
+    },
+    {
+      "route": "/display",
+      "width": 1280,
+      "failures": []
+    },
+    {
+      "route": "/email-templates",
+      "width": 1280,
+      "failures": []
+    },
+    {
+      "route": "/smtp",
+      "width": 1280,
+      "failures": []
+    },
+    {
+      "route": "/email-queue",
+      "width": 1280,
+      "failures": []
+    },
+    {
+      "route": "/ntp",
+      "width": 1280,
+      "failures": []
+    },
+    {
+      "route": "/tls",
+      "width": 1280,
+      "failures": []
+    },
+    {
+      "route": "/device-health",
+      "width": 1280,
+      "failures": []
+    },
+    {
+      "route": "/backups",
+      "width": 1280,
+      "failures": []
+    },
+    {
+      "route": "/rejected-uploads",
+      "width": 1280,
+      "failures": []
+    },
+    {
+      "route": "/diagnostics",
+      "width": 1280,
+      "failures": []
+    },
+    {
+      "route": "/audit",
+      "width": 1280,
+      "failures": []
+    },
+    {
+      "route": "/clocks",
+      "width": 1280,
+      "failures": []
+    },
+    {
+      "route": "/system",
+      "width": 1280,
+      "failures": []
+    }
+  ],
+  "scope": "29 manager pages, seeded data and empty states; light theme; 320/390/1280 widths. Separate maintained browser checks cover dialogs and employee portals."
+}

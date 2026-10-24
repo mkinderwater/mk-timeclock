@@ -1,0 +1,15 @@
+{
+  "release": "1.9.5-RC3-cleanup7",
+  "checks": {
+    "css_lint": "pass",
+    "source_preflight": "pass",
+    "targeted_gui_checks": 2,
+    "embedded_js_syntax_scripts": 19
+  },
+  "limits": [
+    "SQLite development headers unavailable; compilation not completed",
+    "Browser and device checks not run",
+    "Legacy test_r47_gui_consistency test_no_visible_unused_template_option fails obsolete source assertion; unchanged by this patch",
+    "Full maintained suite baseline remains cleanup4"
+  ]
+}

@@ -1,0 +1,34 @@
+{
+  "release": "1.9.5-RC3-cleanup12",
+  "baseline": "cleanup11",
+  "changes": [
+    "Waiting for approval first; new-entry form moved to native dialog",
+    "Upcoming/ongoing sorted by start ascending; Past by start descending",
+    "History employee/year filters, independent of waiting queue",
+    "50-row paging replaces hidden 300-record ceiling",
+    "One-day end-date defaults on employee and manager forms",
+    "Suggested return date accepted when blank/omitted; explicit invalid dates rejected",
+    "Concise dialog help and page copy"
+  ],
+  "schema": "No changes; existing rows, approvals, audits and saved revisions retained",
+  "checks": {
+    "server_compile_werror": "pass x86_64",
+    "maintained_suite_with_browsers": "49/51",
+    "new_http_history_acceptance": "pass with 300+ records, filters, year-crossing leave, paging, optional return, no entry emails and schema comparison",
+    "new_browser_history_acceptance": "pass at 320/390/1280px; sorting, filters, paging, queue approval, dialog lifecycle, one-day entry and suggested return",
+    "existing_workflow_and_stat_browser_acceptance": "pass",
+    "css_lint": "pass",
+    "preflight": "pass"
+  },
+  "known_failures": {
+    "scripts": [
+      "test_current_closed_period_upload_http.py",
+      "test_rc3_closed_period_attendance.py"
+    ],
+    "baseline": "Existing overnight private-review failures reproduce on unchanged cleanup8 and remain unchanged here"
+  },
+  "limitations": [
+    "No physical Banana Pi or ARM acceptance run",
+    "Agent unchanged except version header and not rebuilt here"
+  ]
+}

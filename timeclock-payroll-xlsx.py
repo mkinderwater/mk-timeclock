@@ -71,7 +71,10 @@ def worked_hours(row):
     return hours
 
 def make(raw, target, start, end):
-    data=list(csv.DictReader(io.StringIO(raw)))
+    # Historical vacation is email context, not a record for this pay period.
+    # Filter during rendering so saved CSV revisions remain untouched.
+    data=[r for r in csv.DictReader(io.StringIO(raw))
+          if not (r.get('Status') or '').strip().casefold().startswith('previous approved vacation day:')]
     groups={}
     for r in data:
         person=r.get('Employee','').strip() or 'Unknown employee'

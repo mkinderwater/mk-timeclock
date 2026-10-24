@@ -10,7 +10,6 @@ import tempfile
 from collections import Counter, defaultdict
 from pathlib import Path
 
-PAGE_SOURCES = ['server.c', 'admin_ops.inc', 'schedule.inc', 'payroll.inc']
 TEXT_SUFFIXES = {'.c', '.h', '.inc', '.css', '.py', '.sh', '.md', '.service', '.path', '.example', '.txt'}
 TEXT_NAMES = {'Makefile', '.editorconfig', '.gitattributes'}
 COLOR = re.compile(r'#[0-9a-fA-F]{3,8}\b|\brgba?\(|\bhsla?\(|\b(white|black)\b')
@@ -126,19 +125,24 @@ def nav_keys(root):
 
 def lint_pages(root):
     problems = []
-    src = {f: (root / 'src' / f).read_text(encoding='utf-8') for f in PAGE_SOURCES}
+    # Pages also live in feature includes. Decode C-escaped quotes so both
+    # attribute quote styles receive the same markup checks.
+    src = {p.name: p.read_text(encoding='utf-8').replace(r'\"', '"')
+           for p in sorted((root / 'src').iterdir())
+           if p.suffix in ('.c', '.h', '.inc') and p.name != 'ui.inc'}
     keys = nav_keys(root)
     for f, text in src.items():
         if '<style' in text:
             problems.append(f'{f}: page contains a <style> block; use src/ui.css')
-        for m in re.finditer(r"style='([^']*)'", text):
-            problems.append(f"{f}: inline style='{m.group(1)}'; use a class in src/ui.css")
+        for m in re.finditer(r'''style=(['"])(.*?)\1''', text):
+            problems.append(f"{f}: inline style='{m.group(2)}'; use a class in src/ui.css")
         for key in re.findall(r'UI_HEAD\("[^"]*","([\w-]+)"\)', text):
             if key not in keys:
                 problems.append(f'{f}: page key "{key}" is not in the NAV table (tools/gen_ui_inc.py)')
         # Buttons in page markup must sit in an .actions row (buttons built in JS for table rows are exempt).
         for m in re.finditer(r'<button\b', text):
-            opened = text.rfind("<div class='actions'>", 0, m.start())
+            rows = list(re.finditer(r'''<div class=(['"])actions\1>''', text[:m.start()]))
+            opened = rows[-1].start() if rows else -1
             if opened == -1 or '</div>' in text[opened:m.start()]:
                 line = text.count('\n', 0, m.start()) + 1
                 problems.append(f"{f}:{line}: <button> outside <div class='actions'>; wrap it so spacing is consistent")

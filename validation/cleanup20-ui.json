@@ -1,0 +1,11 @@
+{
+  "passed": true,
+  "browser_seconds": 33.002,
+  "checks": [
+    "Manager cards column absent",
+    "Eight Employee columns",
+    "Existing mobile and all-page spacing browser checks",
+    "CSS lint clean",
+    "Server Werror build"
+  ]
+}
