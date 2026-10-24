@@ -59,6 +59,22 @@ Budget **C$90–150 per clock in 2026**, typically around **C$120**, including e
 | Network | 2.4 GHz Wi-Fi |
 | Assembly | Jumper wires, headers, fasteners and optional printed case |
 
+### Component photos
+
+These are the electronic modules used in the build. The images show the boards, connectors and markings to look for when sourcing parts. Check the specifications and pin labels on your actual hardware before connecting power.
+
+| RFID reader and credentials | 2.42-inch OLED display |
+| :---: | :---: |
+| [![RC522 RFID reader, card, fob and eight-pin header](rfid.png)](rfid.png) | [![Front and rear of the seven-pin SSD1309 OLED display](oled.png)](oled.png) |
+| **RC522 / MFRC522, 13.56 MHz**. Reader module, card, key fob and header shown. | **SSD1309, 128 × 64**. Front and rear views show the seven-pin header and board markings used for I²C configuration. |
+
+| USB-C power breakout | Active buzzer |
+| :---: | :---: |
+| [![USB-C breakout board showing G, positive D, negative D and V pads](usb-c.png)](usb-c.png) | [![Two views of a wired active buzzer showing its housing and voltage marking](buzzer.png)](buzzer.png) |
+| **USB-C breakout**. Four pads marked `G`, `+D`, `-D` and `V`; only power and ground are used here. | **Two-wire active buzzer**. Both housing views and the red/black leads are shown. |
+
+The OLED and USB-C illustrations show specific PCB layouts. Other versions can have different pad locations or component arrangements, even when sold under the same name. Follow the [wiring tables](#wiring) and [OLED I²C changes](#oled-ic0) for this build, not the images alone.
+
 Case v8.34 uses internal M2 × 5 mm fasteners for the OLED and RC522. Use right-angle headers to fit the enclosure.
 
 Print the [front](https://github.com/mkinderwater/mk-timeclock/blob/main/front.stl) and [back](https://github.com/mkinderwater/mk-timeclock/blob/main/back.stl). View the [assembled model](https://github.com/mkinderwater/mk-timeclock/blob/main/assembled.stl) to see how they fit together.
