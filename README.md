@@ -200,24 +200,34 @@ Employees can request vacation through their private link. Managers approve requ
 
 ## Payroll
 
-Review and close the pay period, create an export, then send the report when needed.
+Review and close the pay period, create an export, then send the report when needed. The Excel workbook has two tabs:
 
-- **Payroll Summary** shows employee totals and notes.
-- **Daily Detail** groups records by employee, with filters and links from the Summary.
-- A completed shift belongs to the pay period containing its local IN date, including overnight shifts.
-- Corrections can require a new export revision. Earlier saved revisions remain unchanged.
+- **Payroll Summary:** one line per employee, showing worked hours, vacation days, sick days, stat holidays, other recorded leave, and exceptions or manager notes. Annual vacation shows days used against the employee’s allowance, such as **6 of 15 days**. The allowance is for reference; it does not block requests.
+- **Daily Detail:** dated shifts with actual IN and OUT times, worked hours, attendance status, and notes or corrections. Late arrivals and early departures show the affected date and minutes. Approved vacation, stat holidays and recorded absences have their own rows.
+
+Both tabs include Employee ID, using the company’s ID when supplied and the clock’s internal ID otherwise. Daily Detail follows the Summary’s employee order, with alternating shaded blocks. Click a name in the Summary to jump to that employee’s records, or use the detail filters to review a date or employee. Undated reference and override rows stay at the end of the relevant employee’s block.
+
+Late and early flags apply after the configured grace. Actual punch times and recorded hours remain visible, alongside explanations such as an approved departure. Manager corrections and approval overrides appear in the report so payroll can see what was reviewed.
+
+Worked hours and leave days are separate. Payroll determines compensation; the clock does not calculate wages. Summary hours add the rounded shift hours in the CSV. Email period totals use seconds and can differ slightly. A completed overnight shift belongs to the pay period containing its local IN date.
+
+Changes after closing can require a new export revision. Earlier saved revisions remain unchanged, and each emailed workbook is generated from its saved revision.
 
 ### Sample payroll reports
 
-These previews use fictional employees and sample attendance records. Click either image to view it full size.
+These previews use fictional employees for October 12–16, 2026. Click an image to view it full size.
 
-**Payroll Summary**
+**Payroll Summary** shows totals, vacation used and allowed, and exceptions. Sarah’s late arrival and early departure appear alongside Robert’s manager correction and override.
 
-[![Sample Payroll Summary](payroll-summary.png)](payroll-summary.png)
+[![Sample Payroll Summary with attendance exceptions and vacation allowances](payroll-summary.png)](payroll-summary.png)
 
-**Daily Detail (excerpt)**
+**Daily Detail** shows the records behind those totals: Thanksgiving, David’s sick day, Elena’s approved vacation, Robert’s corrected OUT and Sarah’s attendance exceptions.
 
-[![Sample Daily Detail](payroll-daily-detail.png)](payroll-daily-detail.png)
+[![Sample Daily Detail with shifts, leave, holidays and manager corrections](payroll-daily-detail.png)](payroll-daily-detail.png)
+
+**Late arrival and early departure, close up:** Sarah arrived 12 minutes late on October 13 and left 60 minutes early on October 16. The report retains her actual times and hours, with “Traffic delay” and “Manager approved departure” beside the affected shifts.
+
+[![Daily Detail showing Sarah’s late arrival and approved early departure](payroll-exceptions.png)](payroll-exceptions.png)
 
 ## Additional clocks
 
