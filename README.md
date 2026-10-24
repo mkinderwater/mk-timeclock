@@ -4,13 +4,35 @@ A free, self-hosted RFID employee time clock for the **Banana Pi BPI-M2 Zero**, 
 
 Record attendance, manage employees and vacation, and export payroll reports from a web browser. No subscription or cloud account is required.
 
+Attendance is recorded locally; email delivery requires access to your SMTP server, and Secondary clocks need a network connection to upload queued punches to the Primary.
+
 Current release: **1.9.5-RC3-cleanup27**.
+
+**[Download the latest mk-timeclock](https://github.com/mkinderwater/mk-timeclock/releases)**
 
 ## The clock
 
 | Front | Back | Inside |
 | --- | --- | --- |
 | ![Front of the mk-timeclock](https://raw.githubusercontent.com/mkinderwater/mk-timeclock/main/front.png) | ![Back of the mk-timeclock](https://raw.githubusercontent.com/mkinderwater/mk-timeclock/main/back.png) | ![Internal assembly of the mk-timeclock](https://raw.githubusercontent.com/mkinderwater/mk-timeclock/main/internals.png) |
+
+## Manage attendance and vacation in your browser
+
+**See the exceptions. Keep the actual times. Prepare payroll with the details intact.**
+
+These screenshots show the actual management interface with fictional employees. Click either image to view it full size.
+
+### Attendance at a glance
+
+Review today's punches and the clock display from one page. **Late arrivals and early departures stand out**, with the minutes shown beside the punch. Normal lunch OUT/IN punches remain visible, and the corrections page is one click away.
+
+[![Overview showing employee punches, a late arrival and an early departure](overview.png)](overview.png)
+
+### Vacation decisions without the paperwork
+
+**Waiting requests come first.** Approve or deny requests, record vacation approved elsewhere, and review upcoming and past bookings. Filter history by employee or year. Holiday exclusions appear separately from vacation days, and the annual report downloads as an Excel-compatible CSV.
+
+[![Vacation management showing waiting requests, approved bookings, holiday exclusions and annual reporting](vacation.png)](vacation.png)
 
 ## Features
 
@@ -74,6 +96,10 @@ These are the electronic modules used in the build. The images show the boards, 
 | **USB-C breakout**. Four pads marked `G`, `+D`, `-D` and `V`; only power and ground are used here. | **Two-wire active buzzer**. Both housing views and the red/black leads are shown. |
 
 The OLED and USB-C illustrations show specific PCB layouts. Other versions can have different pad locations or component arrangements, even when sold under the same name. Follow the [wiring tables](#wiring) and [OLED I²C changes](#oled-ic0) for this build, not the images alone.
+
+### Print the enclosure
+
+**Print in PLA or ASA. ASA is recommended. No supports are required.**
 
 Case v8.34 uses internal M2 × 5 mm fasteners for the OLED and RC522. Use right-angle headers to fit the enclosure.
 
@@ -164,7 +190,7 @@ Insert the card into the clock and power it on. Allow about ten minutes for firs
 
 ### 3. Upload and install
 
-Upload the source ZIP using WinSCP, SFTP or scp. Connect over SSH using the clock's IP address:
+[Download the latest mk-timeclock ZIP](https://github.com/mkinderwater/mk-timeclock/releases), then upload it using WinSCP, SFTP or scp. Connect over SSH using the clock's IP address:
 
 ```bash
 ssh root@192.168.1.50
@@ -267,6 +293,8 @@ Prewritten PDF manuals are provided for employees and managers:
 
 - [Employee guide](Timeclock-Employee-Guide.pdf)
 - [Manager guide](Timeclock-Manager-Guide.pdf)
+- [Build and install guide](Timeclock-Build-and-Install-Guide.pdf)
+- [Wall mounting template](Timeclock-Wall-Mounting-Template.pdf)
 
 - [Installation and roles](docs/INSTALLATION.md)
 - [Manager operations](docs/OPERATIONS.md)
