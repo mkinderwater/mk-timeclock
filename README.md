@@ -41,6 +41,10 @@ Current release: **1.9.5-RC3-cleanup27**.
 
 An IN starts recorded time; an OUT stops it. Missing punches are flagged. The clock does not invent hours, deduct breaks, calculate overtime pay or decide which hours are payable.
 
+## Estimated build cost
+
+Budget **C$90–150 per clock in 2026**, typically around **C$120**, including electronics, a microSD card, power supply and material for a self-printed enclosure. Software is free. Shipping, tax, tools, assembly labour and extra employee cards are additional.
+
 ## What you need
 
 | Component | Specification |
