@@ -61,6 +61,8 @@ Budget **C$90–150 per clock in 2026**, typically around **C$120**, including e
 
 Case v8.34 uses internal M2 × 5 mm fasteners for the OLED and RC522. Use right-angle headers to fit the enclosure.
 
+Print the [front](https://github.com/mkinderwater/mk-timeclock/blob/main/front.stl) and [back](https://github.com/mkinderwater/mk-timeclock/blob/main/back.stl). View the [assembled model](https://github.com/mkinderwater/mk-timeclock/blob/main/assembled.stl) to see how they fit together.
+
 ## Wiring
 
 ![Wiring guide](https://raw.githubusercontent.com/mkinderwater/mk-timeclock/main/wiring-guide.png)
@@ -146,7 +148,15 @@ Insert the card into the clock and power it on. Allow about ten minutes for firs
 
 ### 3. Upload and install
 
-Upload the source ZIP using WinSCP, SFTP or scp. Connect over SSH, then unzip it and run the installer:
+Upload the source ZIP using WinSCP, SFTP or scp. Connect over SSH using the clock's IP address:
+
+```bash
+ssh root@192.168.1.50
+```
+
+Replace the example IP with your clock's address. Use the `ROOT_PASSWORD` entered in `CONFIG.TXT`.
+
+Unzip the archive and run the installer:
 
 ```bash
 unzip mk-timeclock-lite-RC3-cleanup27.zip
@@ -196,6 +206,18 @@ Review and close the pay period, create an export, then send the report when nee
 - **Daily Detail** groups records by employee, with filters and links from the Summary.
 - A completed shift belongs to the pay period containing its local IN date, including overnight shifts.
 - Corrections can require a new export revision. Earlier saved revisions remain unchanged.
+
+### Sample payroll reports
+
+These previews use fictional employees and sample attendance records. Click either image to view it full size.
+
+**Payroll Summary**
+
+[![Sample Payroll Summary](payroll-summary.png)](payroll-summary.png)
+
+**Daily Detail (excerpt)**
+
+[![Sample Daily Detail](payroll-daily-detail.png)](payroll-daily-detail.png)
 
 ## Additional clocks
 
