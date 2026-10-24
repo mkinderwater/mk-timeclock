@@ -161,7 +161,7 @@ Unzip the archive and run the installer:
 ```bash
 unzip mk-timeclock-lite-RC3-cleanup27.zip
 cd mk-timeclock-lite-RC3-cleanup27
-sudo ./install-master.sh
+./install-master.sh
 ```
 
 The installer handles dependencies, compilation and service setup.
@@ -234,7 +234,7 @@ These previews use fictional employees for October 12–16, 2026. Click an image
 Install a Secondary with:
 
 ```bash
-sudo ./install-slave.sh
+./install-slave.sh
 ```
 
 Generate an adoption code on the Primary, enter it on the Secondary's setup page and approve the request on the Primary. Secondary clocks queue punches while offline and upload them when reconnected.
@@ -243,7 +243,7 @@ Generate an adoption code on the Primary, enter it on the Secondary's setup page
 
 The Primary keeps the latest **30 local backups**, created daily around **02:15**. Manual backups count toward the same limit. Use **Backup and restore** to download or restore an archive.
 
-For an upgrade, upload and extract the new ZIP, then rerun `sudo ./install-master.sh` from its directory. Use `install-slave.sh` on a Secondary. Existing configuration and data are preserved.
+For an upgrade, upload and extract the new ZIP, then rerun `./install-master.sh` from its directory. Use `install-slave.sh` on a Secondary. Existing configuration and data are preserved.
 
 ## Documentation
 
