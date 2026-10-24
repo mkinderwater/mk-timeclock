@@ -14,15 +14,30 @@ Current release: **1.9.5-RC3-cleanup27**.
 
 ## Features
 
-- RFID IN/OUT punches with employee names, OLED feedback and distinct buzzer sounds.
-- Browser management for employees, cards, schedules and attendance corrections.
-- Weekly and dated schedules, late-arrival grace and final early-departure checks.
-- Editable employee and manager email notifications.
-- Employee timesheet links and vacation requests.
-- Manager-recorded vacation, annual allowances and holiday CSV import.
-- Payroll CSV and two-tab Excel workbooks, with saved report revisions.
-- Local backups and restore.
-- Optional Secondary clocks with offline punch queues.
+### For business owners
+
+- **Keep control of your records:** run the system locally, without a subscription, per-employee software fees or a required cloud account.
+- **Track attendance:** card-based IN/OUT punches, employee names on the display, audible confirmation and a view of who is recorded as clocked IN.
+- **Manage your team:** search employees by name, use your company's Employee IDs, assign attendance cards and keep manager authorization cards separate.
+- **Review exceptions:** weekly or dated schedules, configurable grace, late arrivals, final early departures and missing-punch flags. Managers can correct records and add explanations, with an audit history.
+- **Prepare payroll:** weekly, every-two-weeks, twice-monthly or monthly periods; employee timesheet review and approval; manager overrides; CSV and Excel exports with employee summaries and shift detail. Saved revisions preserve earlier reports.
+- **Handle vacation:** employee requests, manager approvals, previously approved or historical vacation, annual usage against an optional allowance, holiday calendars and CSV holiday import.
+- **Automate communication:** choose when timesheet links and payroll reports are sent. Edit notification templates and use your own SMTP server for employee and manager emails.
+- **Recover your data:** daily local backups, optional emailed backup copies, manager-authorized downloads and restore.
+
+### For installers and resellers
+
+- **Deploy one clock or several:** a Primary hosts management and attendance records; approved Secondary clocks upload punches and keep a local queue during network outages.
+- **Repeat the installation:** use the prepared OS image and included installer on the supported Banana Pi hardware.
+- **Maintain it through the browser:** manage clock names, HTTPS certificates, email delivery, device health and system operations.
+- **Supply and customize clocks:** commercial use and redistribution are permitted under AGPL-3.0. See [License](#license) for source-sharing obligations.
+
+### For makers and developers
+
+- **Build with common parts:** RC522 reader, SSD1309 OLED, active buzzer, Wi-Fi antenna and a printed enclosure.
+- **Work with accessible tools:** C programs, SQLite storage, Python and shell helpers on Linux.
+- **Adapt the system:** source and build scripts are available for modifying the interface, reports, notifications and hardware integration.
+- **Develop against real workflows:** the repository includes automated checks for attendance, payroll exports, vacation, notifications and management pages.
 
 An IN starts recorded time; an OUT stops it. Missing punches are flagged. The clock does not invent hours, deduct breaks, calculate overtime pay or decide which hours are payable.
 
@@ -36,6 +51,7 @@ An IN starts recorded time; an OUT stops it. Missing punches are flagged. The cl
 | Display | 2.42-inch SSD1309 OLED, 128 × 64, configured for I²C |
 | Buzzer | Compatible two-wire active buzzer |
 | Power | USB-C power breakout and regulated 5 V, 2 A supply |
+| Wi-Fi antenna | Stick-on 2.4 GHz PCB antenna with coax lead and IPEX/u.FL plug |
 | Network | 2.4 GHz Wi-Fi |
 | Assembly | Jumper wires, headers, fasteners and optional printed case |
 
@@ -44,6 +60,12 @@ Case v8.34 uses internal M2 × 5 mm fasteners for the OLED and RC522. Use right-
 ## Wiring
 
 These are **physical pin numbers** on the Banana Pi's 40-pin header. Disconnect power while wiring. Use 3.3 V for the reader and display.
+
+### Wi-Fi antenna
+
+The internal photo shows a slim rectangular **PCB Wi-Fi antenna** mounted flat against the inside of the front panel, **to the right of the RC522 reader**, with its long edge vertical.
+
+Use a stick-on **2.4 GHz antenna with a thin coax lead and IPEX/u.FL plug**. Connect it to the Banana Pi's small gold antenna socket near the HDMI connector. Route the lead around the lower edge of the assembly, as pictured.
 
 ### RC522: SPI0
 
