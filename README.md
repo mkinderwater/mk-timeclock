@@ -63,6 +63,8 @@ Case v8.34 uses internal M2 × 5 mm fasteners for the OLED and RC522. Use right-
 
 ## Wiring
 
+![Wiring guide](https://raw.githubusercontent.com/mkinderwater/mk-timeclock/main/wiring-guide.png)
+
 These are **physical pin numbers** on the Banana Pi's 40-pin header. Disconnect power while wiring. Use 3.3 V for the reader and display.
 
 ### Wi-Fi antenna
@@ -212,6 +214,11 @@ The Primary keeps the latest **30 local backups**, created daily around **02:15*
 For an upgrade, upload and extract the new ZIP, then rerun `sudo ./install-master.sh` from its directory. Use `install-slave.sh` on a Secondary. Existing configuration and data are preserved.
 
 ## Documentation
+
+Prewritten PDF manuals are provided for employees and managers:
+
+- [Employee guide](Timeclock-Employee-Guide.pdf)
+- [Manager guide](Timeclock-Manager-Guide.pdf)
 
 - [Installation and roles](docs/INSTALLATION.md)
 - [Manager operations](docs/OPERATIONS.md)
