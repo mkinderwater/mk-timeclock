@@ -1,12 +1,12 @@
 # mk-timeclock Lite
 
-RFID attendance recording, employee time-off requests, and payroll reporting for the **Banana Pi BPI-M2 Zero**.
+RFID attendance recording, employee vacation requests, and payroll reporting for the **Banana Pi BPI-M2 Zero**.
 
 Developed by **iCube Development (Calgary) Ltd.** The clock combines an RC522 reader, a 128 × 64 OLED, audible swipe feedback, and a browser-based manager interface. A single device can operate as the Primary, or additional Secondary clocks can send attendance to it.
 
 **Attendance rules:** IN starts recorded elapsed time; OUT ends it. Missing punches are flagged. The application does not invent an OUT, deduct breaks, calculate overtime pay, or decide which hours are payable.
 
-This README describes **1.9.5-RC3-cleanup6**. The release contains source code and installation scripts, not an operating-system image.
+This README describes **1.9.5-RC3-cleanup27**. The release contains source code and installation scripts, not an operating-system image.
 
 ## Contents
 
@@ -33,14 +33,16 @@ This README describes **1.9.5-RC3-cleanup6**. The release contains source code a
 - Employee creation, multiple attendance cards, lost-card replacement, and card activation/deactivation.
 - Separate manager cards for protected changes. Manager-card scans do not record attendance.
 - Recurring weekly schedules, dated shifts, and a no-schedule option.
-- Per-clock late grace and repeat-swipe settings, with late-arrival notices and private explanation links.
+- Per-clock late grace and repeat-swipe settings, with late-arrival and early-departure notices and private explanation links.
 - Manager corrections, recorded absences, and audit history.
 - Punch-required and vacation-only employee modes.
 
-### Employee access and time off
+### Employee vacation
 
 - Private timesheet links for viewing recorded shifts and leave, approving a timesheet, or reporting a concern.
-- Private time-off request links with manager approval, denial, cancellation, and email notifications.
+- Private vacation links with manager approval, denial, cancellation, and email notifications.
+- Manager entry of vacation approved verbally or by email, including past vacation before installation, without entry emails.
+- Vacation forms contain dates, calculated working days, return date and optional notes. Other absences are recorded separately.
 - Optional annual vacation allowance, including zero and half-day allowance values.
 - **X of Y days used** on the time-off form and reports. Requests can exceed the allowance; there is no accrual or balance enforcement.
 - Annual vacation CSV export and manual or CSV holiday entry.
@@ -323,6 +325,8 @@ Unplug power, check that no wire is trapped, then fit the rear cover with four M
 
 ## Payroll and vacation reporting
 
+A completed shift belongs entirely to the pay period containing its IN date in the clock’s local timezone. An OUT after midnight or after the period ends completes the original shift; hours are not split and no midnight punches are added. For example, September 15 at 22:00 through September 16 at 06:00 contributes all eight hours to September 1–15 and none to September 16–30. Elapsed duration uses the actual timestamps, including daylight-saving changes. A missing OUT remains an exception; the system does not invent an end time.
+
 ### Recorded time and revisions
 
 IN/OUT pairs produce recorded elapsed hours. Schedule expectations, holiday context, and leave records do not manufacture worked hours. Managers resolve missing punches and review exceptions.
@@ -336,7 +340,7 @@ Workbooks are generated from the selected saved CSV revision. A converter update
 | Tab | Contents |
 | --- | --- |
 | Payroll Summary | One employee summary, worked hours, period leave counts, exceptions, annual vacation usage/allowance, Employee ID, and links into Daily Detail |
-| Daily Detail | Source records grouped by employee name and ID, then date and IN time; undated references finish that employee's block; alternating shading and AutoFilter |
+| Daily Detail | Source records grouped by employee name and ID, then date and IN time; undated manager records finish that employee's block; alternating shading and AutoFilter |
 
 Daily Detail has no employee subtotal rows or blank separators. Totals remain on Payroll Summary.
 
@@ -351,6 +355,22 @@ An employee's annual allowance is optional. Blank means unspecified; zero is an 
 An employee can request more than the allowance, including when it is zero. There is no accrual, balance enforcement, or automatic request rejection based on the allowance.
 
 Saved payroll revisions retain the annual figures captured at export. The annual vacation CSV uses current settings, so it can change after schedule, holiday, allowance, or approval edits.
+
+### Vacation workflow
+
+Employees use their private link to **Request vacation**: starting date, ending date, suggested return date and optional notes. One-day bookings default the end date to the start date. A blank return date uses the server suggestion. Working days are calculated automatically from current schedules and holidays. There is no leave-type selector or editable day total. The manager approves or denies the request on **Vacation**, and the existing email notifications report the request and decision.
+
+The manager Vacation page starts with **Waiting for approval**. **Vacation history** is split into **Upcoming** (including ongoing leave, earliest start first) and **Past** (most recent start first). Employee and year filters apply to history; waiting requests stay visible independently. Each list has 50-row pages, so older records beyond the previous 300-row cap remain accessible. Year filters include vacation overlapping the selected year.
+
+Managers click **Record vacation** to open a dialog for verbal/email approvals or vacation taken before installation. Select an employee, including an inactive employee if recording historical vacation, then enter dates and optional approval details. The end date defaults to the start date for one-day bookings. Return to work is suggested automatically; accept it as-is, change it, or leave it blank to use the same server suggestion. Past and future dates are accepted. The entry saves directly as Approved, identifies the manager and recording time, and sends no entry email.
+
+Approved vacation, including future bookings, counts toward **X of Y days used**. The allowance is informational and does not block entries. Overlapping pending or approved records are rejected. Cancel an incorrect approval and record a replacement; cancellation retains its existing notification rules. Existing saved revisions remain unchanged, and affected exports are flagged for a new revision.
+
+When vacation spans configured stat holidays, forms and request history show a breakdown such as **4 vacation days + 1 stat holiday**, with each holiday's name and date. Stats never count toward vacation usage. Employee timesheets show the stat once, with **Not counted as vacation**, rather than an additional vacation row. Payroll retains **Stat holiday (not vacation)**.
+
+Stat-only requests are rejected with the holiday date and name. Request history uses the current calendar but retains the originally requested day count; if it differs, the history explains that the calendar changed. Configured stat dates are listed separately even when they fall on an employee's non-working day. These are calendar records, not a calculation of holiday-pay entitlement. Changing holidays updates current counts and flags affected exports for revision without rewriting saved revisions.
+
+For sickness or another missed-attendance explanation, use **Punches and corrections → Recorded absences**. New personal/unpaid/other leave requests are no longer accepted through the vacation form or API. Earlier non-vacation records remain in history and keep their original type. Existing links and internal route names remain valid.
 
 ### Send times
 
@@ -495,7 +515,7 @@ python3 tests/run_current.py --browser
 
 The maintained suite is listed in `tests/current_suite.json`. Historical tests remain for coverage review and can carry obsolete assumptions; unrestricted test discovery is not the current acceptance contract.
 
-The latest full maintained run recorded for cleanup4 passed **44/44 scripts**. Cleanup5 and cleanup6 received targeted browser/layout checks. Development checks do not establish physical RFID, OLED, buzzer, on-device performance, power-loss, or installed restore acceptance. See [Testing](docs/TESTING.md) for the remaining device checks.
+Cleanup27 passes **54/54 maintained non-browser checks**, including deferred corrected/manual lunch departures, preserved paired OUT flags, consecutive overnight arrivals and overdue upload settling. Browser checks were not run for this release. Cleanup21 previously passed 56/56 including browsers. Blank-ID reservation and historical approval regressions remain maintained. Cleanup13 corrected the timezone-dependent overnight test fixtures. Both boundary tests pass in Calgary (America/Edmonton), UTC and Amsterdam time without application logic changes; see [cleanup13 release notes](RELEASE_NOTES_cleanup13.md). Vacation workflow, notifications, history retention and export checks pass. The historical cleanup4 run passed 44/44. Development checks do not establish physical RFID, OLED, buzzer, on-device performance, power-loss, or installed restore acceptance. See [Testing](docs/TESTING.md) for the remaining device checks.
 
 Known limits include a serial web backend, report rebuilding on historical period lists, and UID-based cards that do not distinguish physical clones. Review payroll output and complete a device acceptance check before production use.
 

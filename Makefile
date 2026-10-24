@@ -6,7 +6,7 @@ FREETYPE_LIBS := $(shell pkg-config --libs freetype2 2>/dev/null)
 .PHONY: all clean check-deps check-i2c ui lint
 all: timeclock-server timeclock-agent timeclock-mailer
 
-timeclock-server: src/server.c src/version.h src/payroll_timesheet.h src/vacation_usage.h src/send_schedule.h src/schedule.inc src/payroll.inc src/payroll_dates.h src/attendance.inc src/email_render.h src/admin_ops.inc src/reconciliation.inc src/account_review.inc src/time_off.inc src/issues.inc src/note_link.inc src/ui.inc src/oled.h src/wifi_signal.h
+timeclock-server: src/server.c src/version.h src/payroll_timesheet.h src/employee_number.h src/period_approval.h src/vacation_usage.h src/send_schedule.h src/schedule.inc src/payroll.inc src/payroll_dates.h src/attendance.inc src/email_render.h src/admin_ops.inc src/reconciliation.inc src/account_review.inc src/time_off.inc src/issues.inc src/note_link.inc src/ui.inc src/oled.h src/wifi_signal.h
 	$(CC) $(CFLAGS) -o $@ src/server.c -lsqlite3 -lcrypt
 
 check-deps:
@@ -23,12 +23,12 @@ check-i2c:
 clean:
 	rm -f timeclock-server timeclock-agent timeclock-mailer
 
-timeclock-mailer: src/mailer.c src/payroll_mail.inc src/payroll_timesheet.h src/vacation_usage.h src/send_schedule.h src/payroll_dates.h src/email_render.h
+timeclock-mailer: src/mailer.c src/payroll_mail.inc src/payroll_timesheet.h src/employee_number.h src/period_approval.h src/vacation_usage.h src/send_schedule.h src/payroll_dates.h src/email_render.h
 	$(CC) $(CFLAGS) -o $@ src/mailer.c -lsqlite3 -lcurl
 
 
 # Regenerate src/ui.inc after editing src/ui.css or the NAV table in tools/gen_ui_inc.py (bump UI_VERSION so browsers refetch).
-UI_VERSION ?= 1.9.5-RC3-cleanup5
+UI_VERSION ?= 1.9.5-RC3-cleanup10
 ui:
 	python3 tools/gen_ui_inc.py src/ui.css src/ui.inc $(UI_VERSION)
 

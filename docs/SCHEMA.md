@@ -96,3 +96,6 @@ The full baseline/candidate comparison verified column order, types, defaults, k
 Cleanup2 adds only `smtp_settings.sender_name TEXT NOT NULL DEFAULT ''` for the shared outgoing display name. A current RC3 database receives that field on startup, preserving its existing settings. No tables are added.
 
 Cleanup3 adds `employees.vacation_days REAL` (nullable, 0 through 366 in half-day increments), and `send_time TEXT NOT NULL DEFAULT '00:00'` on payroll_settings and review_send_settings. Current RC3 receives these fields on startup. No annual balance, accrual, allocation, enforcement or dispatch table is added. Frozen annual usage/allowance travels in the existing immutable CSV snapshot records.
+
+
+Vacation workflow: no tables, columns, indexes or triggers added. Existing `timeoff_requests.kind` values are retained for historical records; new submissions accept only `vacation`. Manager-entered approvals use the existing request row and `timeoff_audit` action `recorded_approved`. No audit timestamp is backdated.
