@@ -10,6 +10,8 @@ Current release: **1.9.5-RC3-cleanup27**.
 
 **[Download the latest mk-timeclock](https://github.com/mkinderwater/mk-timeclock/releases)**
 
+> **Building a clock?** The [Build and Install Guide (PDF)](Timeclock-Build-and-Install-Guide.pdf) has detailed step-by-step instructions, from printing the case to hanging the finished clock on the wall. It needs no previous experience and includes a shopping list, photos, soldering steps, a wiring checklist and troubleshooting.
+
 ## The clock
 
 | Front | Back | Inside |
@@ -65,6 +67,8 @@ Budget **C$90–150 per clock**, typically **C$120** at estimated 2026 prices. T
 
 ## What you need
 
+The [Build and Install Guide (PDF)](Timeclock-Build-and-Install-Guide.pdf) has the full shopping list, with screw sizes and quantities.
+
 | Component | Specification |
 | --- | --- |
 | Computer | Banana Pi BPI-M2 Zero |
@@ -101,11 +105,19 @@ Case v8.34 uses internal M2 × 5 mm fasteners for the OLED and RC522. Use right-
 
 Print the [front](https://github.com/mkinderwater/mk-timeclock/blob/main/front.stl) and [back](https://github.com/mkinderwater/mk-timeclock/blob/main/back.stl). View the [assembled model](https://github.com/mkinderwater/mk-timeclock/blob/main/assembled.stl) to see how they fit together.
 
+Place the front with its outside face on the bed, and the back with its flat outside face on the bed. Start from your printer's profile for the material, with a 0.4 mm nozzle, 0.24 mm layers, 3 walls and 20% infill. To regenerate a part, open the [SCAD source](https://github.com/mkinderwater/mk-timeclock/blob/main/bpi_rfid_timeclock_v8_34_two_piece.scad) in OpenSCAD; the standard build uses the published STLs.
+
+For wall mounting, print the [wall mounting template](Timeclock-Wall-Mounting-Template.pdf) at 100% / Actual size and check its 80 mm reference before drilling.
+
 ## Wiring
+
+The tables below are a quick reference. For step-by-step soldering, the OLED I²C change (including removing the display ribbon to reach R9 to R12), assembly order and a wiring checklist, follow the [Build and Install Guide (PDF)](Timeclock-Build-and-Install-Guide.pdf).
 
 ![Wiring guide](https://raw.githubusercontent.com/mkinderwater/mk-timeclock/main/wiring-guide.png)
 
-These are **physical pin numbers** on the Banana Pi's 40-pin header. Disconnect power while wiring. Use 3.3 V for the reader and display.
+These are **physical pin numbers** on the Banana Pi's 40-pin header. Pin 1 is the square pad nearest the microSD slot; odd pins are on the inner row and even pins along the board edge. Disconnect power while wiring. The reader and display use 3.3 V: **never connect either to a 5 V pin** (2 or 4).
+
+The complete build uses **14 header wires** plus the antenna lead. RC522 IRQ and RST, and OLED RES, DC and CS, stay unconnected.
 
 ### Wi-Fi antenna
 
@@ -141,7 +153,7 @@ For the project's seven-pin SSD1309 PCB, configure I²C:
 | R9 | Move the resistor here, or bridge the pads |
 | R10, R11, R12 | Bridge the pads |
 
-These labels apply to the project's OLED PCB. The display uses address `0x3c`.
+These labels apply to the project's OLED PCB. R9 to R12 sit under the display's flex ribbon: release the connector's locking bar and slide the ribbon out to reach them, then refit it the same way round and close the bar. Check that no solder bridges neighbouring pads. The display uses address `0x3c`; no reset-wire modification is needed.
 
 ### Buzzer
 
@@ -159,17 +171,19 @@ These labels apply to the project's OLED PCB. The display uses address `0x3c`.
 
 ## Install
 
+This is a summary for experienced installers. The [Build and Install Guide (PDF)](Timeclock-Build-and-Install-Guide.pdf) walks through every step in detail, including finding the clock's IP address, copying the ZIP and creating the first manager.
+
 ### 1. Write the image
 
 Download the prepared [bpi-zero-wbuild 3.13 image](https://github.com/mkinderwater/bpi-zero-wbuild/releases/tag/3.13):
 
 `bpi-zero-wbuild-3.13-trixie-minimal-hw-bpi-m2-zero.img.gz`
 
-Write it to the microSD card with balenaEtcher.
+Write it to the microSD card with balenaEtcher. On Windows, cancel any prompt to format the disk.
 
 ### 2. Set your credentials
 
-Reinsert the card. Open `CONFIG.TXT` on the `BPIWBUILD` volume and enter your Wi-Fi and SSH credentials:
+Reinsert the card in your computer. Open `CONFIG.TXT` on the `BPIWBUILD` volume and enter your Wi-Fi and SSH credentials:
 
 ```ini
 SSID=OfficeWiFi
@@ -180,11 +194,15 @@ TIMEZONE=America/Edmonton
 ROOT_PASSWORD=your-ssh-password
 ```
 
-Insert the card into the clock and power it on. Allow about ten minutes for first boot, then find its IP address in your router.
+Use your own values, with no spaces around `=` and no quotation marks. The network must be **2.4 GHz**. `ROOT_PASSWORD` is required, and the clock removes it from `CONFIG.TXT` after first boot, so record it somewhere safe.
+
+**Insert the card into the Banana Pi before mounting the board in the case.** Once the Banana Pi is installed, the buzzer blocks the microSD slot.
+
+When assembly and wiring are complete, connect power. Allow about ten minutes for first boot; the OLED stays blank until the software is installed. Find the clock's IP address in your router and reserve it so it doesn't change.
 
 ### 3. Upload and install
 
-[Download the latest mk-timeclock ZIP](https://github.com/mkinderwater/mk-timeclock/releases), then upload it using WinSCP, SFTP or scp. Connect over SSH using the clock's IP address:
+[Download the latest mk-timeclock ZIP](https://github.com/mkinderwater/mk-timeclock/releases), then upload it to `/root` on the clock using WinSCP, SFTP or scp. Connect over SSH using the clock's IP address:
 
 ```bash
 ssh root@192.168.1.50
@@ -195,16 +213,21 @@ Replace the example IP with your clock's address. Use the `ROOT_PASSWORD` entere
 Unzip the archive and run the installer:
 
 ```bash
+cd /root
 unzip mk-timeclock-lite-RC3-cleanup27.zip
 cd mk-timeclock-lite-RC3-cleanup27
 ./install-master.sh
 ```
 
-The installer handles dependencies, compilation and service setup.
+Use the filename from your download. The installer handles dependencies, compilation and service setup; keep the clock powered until it finishes.
 
 ### 4. Open the clock
 
-Visit `https://<clock-ip>/setup` and create your manager account. Scan a card to register it for manager authorization.
+Visit `https://<clock-ip>/setup` and create your manager account. A fresh install uses a self-signed certificate, so a browser warning is expected until you install a trusted one under **Settings**. Tap an unused card within 30 seconds to register it for manager authorization, then sign in at `https://<clock-ip>/login`.
+
+Keep the manager authorization card separate from the manager's own attendance card.
+
+Before closing the case, check that the display shows the time and **TAP YOUR CARD**, the manager card beeps and shows **HELLO MANAGER**, and an unregistered card shows **INVALID CARD**. Then fit the back with 4 × M3 × 12 mm countersunk screws.
 
 ## Set up your business
 
