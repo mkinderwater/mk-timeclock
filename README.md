@@ -18,6 +18,12 @@ Current release: **1.9.5-RC3-cleanup27**.
 | --- | --- | --- |
 | ![Front of the mk-timeclock](https://raw.githubusercontent.com/mkinderwater/mk-timeclock/main/front.png) | ![Back of the mk-timeclock](https://raw.githubusercontent.com/mkinderwater/mk-timeclock/main/back.png) | ![Internal assembly of the mk-timeclock](https://raw.githubusercontent.com/mkinderwater/mk-timeclock/main/internals.png) |
 
+**External Wi-Fi antenna version**
+
+[![Front of the mk-timeclock with an external Wi-Fi antenna](front-external-wifi.png)](front-external-wifi.png)
+
+The enclosure supports internal or external Wi-Fi antenna builds, selected in the OpenSCAD source before exporting the printable parts.
+
 ## The management interface
 
 Screenshots use fictional employees. Click an image to view it full size.
@@ -77,7 +83,7 @@ The [Build and Install Guide (PDF)](Timeclock-Build-and-Install-Guide.pdf) has t
 | Display | 2.42-inch SSD1309 OLED, 128 × 64, configured for I²C |
 | Buzzer | Compatible two-wire active buzzer |
 | Power | USB-C power breakout and regulated 5 V, 2 A supply |
-| Wi-Fi antenna | Stick-on 2.4 GHz PCB antenna with coax lead and IPEX/u.FL plug |
+| Wi-Fi antenna | Internal: stick-on 2.4 GHz PCB antenna with IPEX/u.FL lead. External: 2.4 GHz antenna with matching bulkhead connector and IPEX/u.FL pigtail |
 | Network | 2.4 GHz Wi-Fi |
 | Assembly | Jumper wires, headers, fasteners and optional printed case |
 
@@ -107,6 +113,8 @@ Print the [front](https://github.com/mkinderwater/mk-timeclock/blob/main/front.s
 
 Place the front with its outside face on the bed, and the back with its flat outside face on the bed. Start from your printer's profile for the material, with a 0.4 mm nozzle, 0.24 mm layers, 3 walls and 20% infill. To regenerate a part, open the [SCAD source](https://github.com/mkinderwater/mk-timeclock/blob/main/bpi_rfid_timeclock_v8_34_two_piece.scad) in OpenSCAD; the standard build uses the published STLs.
 
+**Choose the antenna version before exporting.** Open the SCAD source in OpenSCAD and select the internal or external Wi-Fi antenna option. Render and export the required enclosure parts as STL. For the external version shown above, use the enclosure with the antenna connector opening; check the opening against your bulkhead connector before printing. Changing the SCAD selection does not change the already published STL files.
+
 For wall mounting, print the [wall mounting template](Timeclock-Wall-Mounting-Template.pdf) at 100% / Actual size and check its 80 mm reference before drilling.
 
 ## Wiring
@@ -121,7 +129,12 @@ The complete build uses **14 header wires** plus the antenna lead. RC522 IRQ and
 
 ### Wi-Fi antenna
 
-Use a **2.4 GHz PCB antenna with an IPEX/u.FL lead**. Connect it to the gold socket near the HDMI connector. Mount it vertically inside the front panel, to the right of the RC522, as shown in the internal photo. Route the lead around the lower edge.
+Choose either antenna arrangement and select the matching enclosure option in the SCAD source:
+
+- **Internal:** use a 2.4 GHz PCB antenna with an IPEX/u.FL lead. Mount it vertically inside the front panel, to the right of the RC522, as shown in the internal photo. Route the lead around the lower edge.
+- **External:** use a 2.4 GHz antenna and a matching bulkhead-to-IPEX/u.FL pigtail. Secure the bulkhead connector in the enclosure opening, then attach the antenna outside, as shown in [the external Wi-Fi photo](front-external-wifi.png). Match the antenna and pigtail connector type, including SMA versus RP-SMA.
+
+Both arrangements connect to the gold antenna socket near the Banana Pi’s HDMI connector. Route the coax clear of screw posts and case edges, without sharp bends or pinching.
 
 ### RC522: SPI0
 
