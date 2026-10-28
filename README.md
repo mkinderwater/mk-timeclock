@@ -14,7 +14,7 @@ Current release: **1.9.5-RC3-cleanup27**.
 
 ## The clock
 
-| Front | External Wi-Fi | Back | Inside |
+| Front | External Wi-Fi Version | Back | Inside |
 | :---: | :---: | :---: | :---: |
 | [<img src="front.png" alt="Front of the mk-timeclock" width="220">](front.png) | [<img src="front-external-wifi.png" alt="Front of the mk-timeclock with external Wi-Fi antenna" width="220">](front-external-wifi.png) | [<img src="back.png" alt="Back of the mk-timeclock" width="220">](back.png) | [<img src="internals.png" alt="Internal assembly of the mk-timeclock" width="220">](internals.png) |
 
