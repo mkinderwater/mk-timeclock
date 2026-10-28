@@ -14,15 +14,11 @@ Current release: **1.9.5-RC3-cleanup27**.
 
 ## The clock
 
-| Front | Back | Inside |
-| --- | --- | --- |
-| ![Front of the mk-timeclock](https://raw.githubusercontent.com/mkinderwater/mk-timeclock/main/front.png) | ![Back of the mk-timeclock](https://raw.githubusercontent.com/mkinderwater/mk-timeclock/main/back.png) | ![Internal assembly of the mk-timeclock](https://raw.githubusercontent.com/mkinderwater/mk-timeclock/main/internals.png) |
+| Front | External Wi-Fi | Back | Inside |
+| :---: | :---: | :---: | :---: |
+| [<img src="front.png" alt="Front of the mk-timeclock" width="220">](front.png) | [<img src="front-external-wifi.png" alt="Front of the mk-timeclock with external Wi-Fi antenna" width="220">](front-external-wifi.png) | [<img src="back.png" alt="Back of the mk-timeclock" width="220">](back.png) | [<img src="internals.png" alt="Internal assembly of the mk-timeclock" width="220">](internals.png) |
 
-**External Wi-Fi antenna version**
-
-[![Front of the mk-timeclock with an external Wi-Fi antenna](front-external-wifi.png)](front-external-wifi.png)
-
-The enclosure supports internal or external Wi-Fi antenna builds, selected in the OpenSCAD source before exporting the printable parts.
+Choose the internal or external Wi-Fi antenna enclosure in the OpenSCAD source before exporting the printable parts. Click a photo to view it full size.
 
 ## The management interface
 
