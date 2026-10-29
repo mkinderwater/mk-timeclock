@@ -13,6 +13,7 @@ int ttf_width(ttf_t *font,int px_size,const char *text);
 /* Advance width plus ink extent above and below the baseline (any may be NULL). */
 int ttf_measure(ttf_t *font,int px_size,const char *text,int *width,int *above,int *below);
 /* Stable 12-hour HH:MM footprint and separate AM/PM, centred in given band. */
+/* is_pm=-1 renders a zero-padded 24-hour clock, with no AM/PM tag. */
 int ttf_clock_fixed(ttf_t *font,oled_t *oled,int center_x,int baseline_y,
                     int max_px_size,int hour12,int minute,int is_pm,int colon_visible);
 /* Ink height of the digits at the size ttf_clock_fixed will choose. */

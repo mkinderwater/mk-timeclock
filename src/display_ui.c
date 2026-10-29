@@ -171,7 +171,7 @@ void display_idle_status(display_t*d,int pending,int online){
     time_t now=time(NULL);struct tm tm;localtime_r(&now,&tm);
     char date[24],footer[24];strftime(date,sizeof date,"%a %b %d",&tm);
     oled_clear(&d->oled);
-    oled_bitmap_text(&d->oled,date,2,2);
+    oled_bitmap_text(&d->oled,online?date:"OFFLINE",2,2);
     link_badge(d,online);
     hline(d,2,125,12);
 
@@ -181,13 +181,13 @@ void display_idle_status(display_t*d,int pending,int online){
     int baseline=digit_h>0?16+(32+digit_h)/2:45;
     if(baseline>47)baseline=47;
     ttf_clock_fixed(d->font,&d->oled,64,baseline,32,
-                    tm.tm_hour%12?tm.tm_hour%12:12,tm.tm_min,tm.tm_hour>=12,(tm.tm_sec%2)==0);
+                    d->hour24?tm.tm_hour:(tm.tm_hour%12?tm.tm_hour%12:12),tm.tm_min,d->hour24?-1:tm.tm_hour>=12,(tm.tm_sec%2)==0);
     hline(d,2,125,50);
 
-    if(pending>0){
-        int n=pending>999?999:pending;
+    if(pending>0||!online){
+        int n=pending<0?0:pending>999?999:pending;
         if(online)snprintf(footer,sizeof footer,"SENDING %d SWIPE%s",n,n==1?"":"S");
-        else snprintf(footer,sizeof footer,"%d SAVED ON CLOCK",n);
+        else snprintf(footer,sizeof footer,"%d%s SWIPE%s SAVED",n,pending>999?"+":"",pending==1?"":"S");
         label(d,55,footer,1);
     }else label(d,55,"TAP YOUR CARD",1);
     shift_frame(d,d->shift);
@@ -206,7 +206,8 @@ void display_result(display_t*d,display_kind_t kind,const char*text){
     if(p.timestamp){
         time_t now=time(NULL);struct tm tm;localtime_r(&now,&tm);
         int h=tm.tm_hour%12?tm.tm_hour%12:12;
-        snprintf(sub,sizeof sub,"%s %d:%02d %s",p.sub,h,tm.tm_min,tm.tm_hour>=12?"PM":"AM");
+        if(d->hour24)snprintf(sub,sizeof sub,"%s %02d:%02d",p.sub,tm.tm_hour,tm.tm_min);
+        else snprintf(sub,sizeof sub,"%s %d:%02d %s",p.sub,h,tm.tm_min,tm.tm_hour>=12?"PM":"AM");
     }else if(kind==DISPLAY_REJECT&&text&&!strcmp(text,"SCAN BUSY"))snprintf(sub,sizeof sub,"TAP AGAIN"); /* the employee can fix this one */
     else snprintf(sub,sizeof sub,"%s",p.sub);
     result_page(d,kind,top,p.big,sub,p.icon,p.invert,p.hold);

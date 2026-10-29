@@ -106,15 +106,16 @@ int ttf_clock_digit_height(ttf_t*t,int max_size){
    visible time and AM/PM tag inside the available width. */
 int ttf_clock_fixed(ttf_t *t,oled_t *o,int center_x,int baseline,int max_size,
                     int hour12,int minute,int is_pm,int colon_visible){
-    if(!t||!o||hour12<1||hour12>12||minute<0||minute>59)return -1;
+    int h24=is_pm<0;
+    if(!t||!o||hour12<(h24?0:1)||hour12>(h24?23:12)||minute<0||minute>59)return -1;
     if(clock_fit(t,max_size))return -1;
     const int gap=1, am_gap=3;
     const int size=t->clk_size, digit_w=t->clk_digit_w, colon_w=t->clk_colon_w;
-    const int hour_digits=hour12>=10?2:1;
+    const int hour_digits=h24||hour12>=10?2:1;
     const int cells=hour_digits+3; /* hour digit(s), colon, two minute digits */
     const int time_width=(hour_digits+2)*digit_w+colon_w+(cells-1)*gap;
     const int tag_width=oled_bitmap_width("AM");
-    const int total=time_width+am_gap+tag_width;
+    const int total=time_width+(h24?0:am_gap+tag_width);
     int x=center_x-total/2;
     char digits[6];
     if(hour_digits==2)snprintf(digits,sizeof digits,"%02d:%02d",hour12,minute);
@@ -133,6 +134,6 @@ int ttf_clock_fixed(ttf_t *t,oled_t *o,int center_x,int baseline,int max_size,
         x+=cell+gap;
     }
     x+=am_gap-gap;
-    oled_bitmap_text(o,is_pm?"PM":"AM",x,baseline-t->clk_digit_h);
+    if(!h24)oled_bitmap_text(o,is_pm?"PM":"AM",x,baseline-t->clk_digit_h);
     return 0;
 }

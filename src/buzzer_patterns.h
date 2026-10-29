@@ -21,4 +21,8 @@ static const struct buzzer_pattern buzz_fail = {buzz_fail_durations, sizeof buzz
 /* Manager: three short acknowledgments followed by a long finish, 500 ms. */
 static const unsigned short buzz_manager_durations[] = {65, 45, 65, 45, 65, 45, 170};
 static const struct buzzer_pattern buzz_manager = {buzz_manager_durations, sizeof buzz_manager_durations / sizeof buzz_manager_durations[0]};
+/* Communication reminder: one brief pulse, distinct from all swipe patterns.
+   Active buzzer volume/pitch are fixed by the hardware. */
+static const unsigned short buzz_comms_durations[] = {40};
+static const struct buzzer_pattern buzz_comms = {buzz_comms_durations, 1};
 #endif

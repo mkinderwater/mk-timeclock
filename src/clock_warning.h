@@ -1,0 +1,4 @@
+#ifndef CLOCK_WARNING_H
+#define CLOCK_WARNING_H
+#define CLOCK_RECORD_WARNING "<p id='clockRecordWarning' role='alert' hidden></p><script>(()=>{const box=document.getElementById('clockRecordWarning');async function check(){if(document.hidden)return;box.replaceChildren();box.hidden=true;try{const j=await tc.issues(),items=j.items.filter(x=>x.count&&(x.key==='clocks'||x.key==='uploads'||x.key==='corrections'));if(items.length){box.hidden=false;box.textContent='Attendance may be incomplete. '+items.map(x=>x.text).join('. ')+'. ';for(const [url,label] of [['/clocks','Clock management'],['/rejected-uploads','Upload exceptions']]){let a=document.createElement('a');a.href=url;a.textContent=label;box.append(a,' ')}}}catch(e){box.hidden=false;box.textContent='Clock health could not be checked. Reload before finalizing attendance.'}}check();setInterval(check,60000)})();</script>"
+#endif

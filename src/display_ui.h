@@ -21,7 +21,7 @@ typedef enum {
 } display_kind_t;
 
 typedef struct {
-    oled_t oled;ttf_t*font;int ready;char clock_id[50];int shift;int last_dim;
+    oled_t oled;ttf_t*font;int ready;char clock_id[50];int shift;int last_dim;int hour24;
     /* Active confirmation page (monotonic milliseconds). */
     int msg_active,msg_kind,msg_invert,msg_bar,msg_spin;
     int wifi_dbm,wifi_bars,wifi_associated;

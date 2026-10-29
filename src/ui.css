@@ -20,8 +20,14 @@
  --accent:#1f4e79;--accent-ink:#ffffff;--focus:#2f6fb2;
  --ok:#1d7a46;--warn:#9a6700;--err:#b42318;
  --ok-bg:#e7f4ec;--warn-bg:#fdf3dc;--err-bg:#fdecea;
- --shadow:0 8px 24px rgba(0,0,0,.12);
  --oled-bg:#050505;--oled-bezel:#1f2937;--backdrop:rgba(0,0,0,.55);--login-w:440px;
+ /* Shift strip: the shared day timeline. Worked time is solid accent; the scheduled window is a dashed slot. */
+ --track:#eef1f5;--sched-bg:#e4ecf5;--sched-line:#8fa6bf;--shift:#1f4e79;--shift-open:#6d9acb;--now:#16202c;--strip-h:30px;
+ /* Status icons: one shape per flag level, so a status still reads in grayscale. */
+ --i-problem:url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%270%200%2016%2016%27%3E%3Cpath%20fill-rule=%27evenodd%27%20d=%27M8%201a7%207%200%201%200%200%2014A7%207%200%200%200%208%201zM5.4%204.3%208%206.9l2.6-2.6%201.1%201.1L9.1%208l2.6%202.6-1.1%201.1L8%209.1l-2.6%202.6-1.1-1.1L6.9%208%204.3%205.4z%27/%3E%3C/svg%3E);
+ --i-check:url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%270%200%2016%2016%27%3E%3Cpath%20fill-rule=%27evenodd%27%20d=%27M8%201.3%2015.3%2014.4H.7zM7.2%206v4.1h1.6V6zm0%205.3v1.6h1.6v-1.6z%27/%3E%3C/svg%3E);
+ --i-ok:url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%270%200%2016%2016%27%3E%3Cpath%20fill-rule=%27evenodd%27%20d=%27M8%201a7%207%200%201%200%200%2014A7%207%200%200%200%208%201zm3.4%204.2%201.1%201.1L7%2011.8%203.8%208.6l1.1-1.1L7%209.6z%27/%3E%3C/svg%3E);
+ --i-muted:url(data:image/svg+xml,%3Csvg%20xmlns=%27http://www.w3.org/2000/svg%27%20viewBox=%270%200%2016%2016%27%3E%3Cpath%20fill-rule=%27evenodd%27%20d=%27M8%201.5a6.5%206.5%200%201%200%200%2013%206.5%206.5%200%200%200%200-13zm0%201.5a5%205%200%201%201%200%2010A5%205%200%200%201%208%203zm0%202.6a2.4%202.4%200%201%200%200%204.8%202.4%202.4%200%200%200%200-4.8z%27/%3E%3C/svg%3E);
  color-scheme:light dark;
 }
 @media (prefers-color-scheme:dark){:root{
@@ -29,7 +35,7 @@
  --accent:#6aa7dc;--accent-ink:#0b1116;--focus:#8cc1ee;
  --ok:#4cc38a;--warn:#e3b341;--err:#f47067;
  --ok-bg:#15291d;--warn-bg:#2e2611;--err-bg:#351a19;
- --shadow:0 8px 24px rgba(0,0,0,.45);
+ --track:#1d262e;--sched-bg:#1f2d3b;--sched-line:#5f7a95;--shift:#6aa7dc;--shift-open:#3e6b94;--now:#e6ebf0;
 }}
 
 /* 2. Cross-platform baseline (Mac, Windows, iPhone, Android) */
@@ -51,6 +57,7 @@ main{max-width:var(--page-w);margin:0 auto;padding:var(--s5) var(--s4) var(--s6)
 h1{font-size:var(--fs-xl);line-height:var(--lh-tight);font-weight:var(--w-bold);margin:0 0 var(--s1)}
 h1+p{color:var(--muted);margin:0 0 var(--s4)}
 h2{font-size:var(--fs-lg);line-height:var(--lh-tight);font-weight:var(--w-bold);margin:0 0 var(--s3)}
+section>h3:not(:first-child){margin-top:var(--s5)}
 h3{font-size:var(--fs-base);font-weight:var(--w-bold);margin:0 0 var(--s2)}
 p{margin:0 0 var(--s3)}
 section{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:var(--s5);margin:0 0 var(--s4);overflow-x:auto}
@@ -69,12 +76,8 @@ section>:last-child,form>:last-child{margin-bottom:0}
 .topbar-in{max-width:var(--page-w);margin:0 auto;padding:0 var(--s4);display:flex;align-items:center;gap:var(--s3);min-height:var(--bar-h)}
 .brand{font-weight:var(--w-bold);color:var(--text);text-decoration:none;white-space:nowrap}
 .nav{display:flex;flex-wrap:wrap;align-items:center;gap:2px;flex:1}
-.nav a,.nav summary{display:block;padding:var(--s1) var(--s3);border-radius:var(--r-sm);color:var(--muted);text-decoration:none;white-space:nowrap;font-size:var(--fs-md);cursor:pointer;list-style:none}
-.nav a:hover,.nav summary:hover,.nav details[open]>summary{background:var(--hover);color:var(--text)}
-.nav summary::-webkit-details-marker{display:none}
-.nav summary::after{content:'';display:inline-block;width:5px;height:5px;margin:0 0 2px var(--s2);border:solid currentColor;border-width:0 1.5px 1.5px 0;transform:rotate(45deg)}
-.nav details{position:relative}
-.nav details>div{position:absolute;top:calc(100% + var(--s1));left:0;z-index:6;min-width:190px;display:grid;padding:var(--s1);background:var(--surface);border:1px solid var(--line);border-radius:var(--r);box-shadow:var(--shadow)}
+.nav a{display:block;padding:var(--s1) var(--s3);border-radius:var(--r-sm);color:var(--muted);text-decoration:none;white-space:nowrap;font-size:var(--fs-md);cursor:pointer;list-style:none}
+.nav a:hover{background:var(--hover);color:var(--text)}
 /* The generator appends one selector per nav entry to this rule. */
 .nav .active{background:var(--hover);color:var(--accent);font-weight:var(--w-medium)}
 .signout{margin:0}
@@ -94,15 +97,17 @@ textarea{min-height:140px;resize:vertical;line-height:var(--lh)}
 button{font-family:inherit;font-size:var(--fs-base);line-height:var(--lh-tight);margin:0;-webkit-appearance:none;appearance:none;-webkit-tap-highlight-color:transparent;min-height:var(--control-h);padding:0 var(--s4);border:1px solid transparent;border-radius:var(--r-sm);background:var(--accent);color:var(--accent-ink);font-weight:var(--w-medium);cursor:pointer;touch-action:manipulation}
 button:hover{filter:brightness(1.08)}
 button:disabled{opacity:.5;cursor:not-allowed;filter:none}
-button[type=button],button.secondary{background:transparent;color:var(--text);border-color:var(--line)}
-button[type=button]:hover,button.secondary:hover{background:var(--hover);filter:none}
+/* Button style follows its class, never its type: filled (default/.primary), outline (.secondary), destructive (.danger). */
+button.secondary{background:transparent;color:var(--text);border-color:var(--line)}
+button.secondary:hover{background:var(--hover);filter:none}
 button.primary{background:var(--accent);color:var(--accent-ink);border-color:transparent}
 button.primary:hover{background:var(--accent);filter:brightness(1.08)}
+button.danger{background:var(--err);color:var(--accent-ink);border-color:transparent}
 
 /* 6. Tables */
 /* Tabular figures keep timestamps and UIDs aligned in columns on every platform. */
 table{width:100%;border-collapse:collapse;font-size:var(--fs-md);font-variant-numeric:tabular-nums}
-th{white-space:nowrap;text-align:left;font-size:var(--fs-xs);font-weight:var(--w-medium);letter-spacing:.04em;text-transform:uppercase;color:var(--muted);padding:var(--s2) var(--s3);border-bottom:1px solid var(--line)}
+th{white-space:nowrap;text-align:left;font-size:var(--fs-sm);font-weight:var(--w-medium);color:var(--muted);padding:var(--s2) var(--s3);border-bottom:1px solid var(--line)}
 td{padding:var(--s2) var(--s3);border-bottom:1px solid var(--line);vertical-align:middle}
 /* Compact buttons inside table rows, centred with the row text. */
 td>button{min-height:var(--control-h-sm);padding:0 var(--s3)}
@@ -116,14 +121,16 @@ tr.row-check>:first-child{box-shadow:inset 4px 0 0 var(--warn)}
 
 /* 7. Status and feedback */
 /* :where() keeps these at class weight so .is-err and .is-ok below can override them. */
-:where(#status,#message,#result,#state,p[role=status]):empty{display:none}
-:where(#status,#message,#result,#state,p[role=status]):not(:empty){padding:var(--s2) var(--s3);border-left:3px solid var(--accent);background:var(--hover);border-radius:var(--r-sm);color:var(--text)}
-.pill{display:inline-block;padding:1px var(--s2);border-radius:var(--r-pill);font-size:var(--fs-xs);font-weight:var(--w-medium);border:1px solid currentColor}
+:where(p[role=status]):empty{display:none}
+:where(p[role=status]):not(:empty){padding:var(--s2) var(--s3);border-left:3px solid var(--accent);background:var(--hover);border-radius:var(--r-sm);color:var(--text)}
 .ok{color:var(--ok)}
-.warn{color:var(--warn)}
 .err{color:var(--err)}
 /* Issue flags. Every flag carries a word, never color alone. Levels: problem (red), check (amber), ok (green), muted (grey). */
-.flag{display:inline-block;padding:0 var(--s2);border-radius:var(--r-pill);font-size:var(--fs-xs);font-weight:var(--w-bold);line-height:var(--lh);border:1px solid currentColor;white-space:nowrap;vertical-align:baseline}
+.flag{display:inline-flex;align-items:center;gap:var(--s1);padding:0 var(--s2) 0 var(--s1);border-radius:var(--r-pill);font-size:var(--fs-xs);font-weight:var(--w-bold);line-height:var(--lh);border:1px solid currentColor;white-space:nowrap;vertical-align:middle}
+.flag::before{content:'';flex:none;width:12px;height:12px;background:currentColor;-webkit-mask:var(--i-muted) center/contain no-repeat;mask:var(--i-muted) center/contain no-repeat}
+.flag-problem::before{-webkit-mask-image:var(--i-problem);mask-image:var(--i-problem)}
+.flag-check::before{-webkit-mask-image:var(--i-check);mask-image:var(--i-check)}
+.flag-ok::before{-webkit-mask-image:var(--i-ok);mask-image:var(--i-ok)}
 .flag+.flag{margin-left:var(--s1)}
 .flag-problem{color:var(--err);background:var(--err-bg)}
 .flag-check{color:var(--warn);background:var(--warn-bg)}
@@ -161,22 +168,7 @@ form>h2:first-child{margin-top:0}
 body.login form{background:var(--surface);border:1px solid var(--line);border-radius:var(--r);padding:var(--s5)}
 
 /* 9. Responsive, motion, print */
-@media (max-width:700px){
- .topbar-in{flex-wrap:wrap;gap:var(--s1) var(--s3);padding:var(--s2) var(--s4)}
- .nav{order:3;flex-basis:100%;margin:0 calc(-1 * var(--s2));justify-content:space-between;position:relative}
- .nav a,.nav summary{padding:var(--s1);font-size:var(--fs-sm)}
- .nav summary::after{margin-left:var(--s1)}
- /* Phone: an open menu becomes a full-width panel under the whole nav, so it never runs off
-    the right edge or covers a menu button that wrapped to a second row. */
- .nav details{position:static}
- .nav details>div{right:0;min-width:0}
- .nav details>div a{padding:var(--s2) var(--s3);font-size:var(--fs-base)}
- .signout{margin-left:auto}
- main{padding-top:var(--s4)}
- section{padding:var(--s4)}
- label:has(>input[type=checkbox]){display:flex;margin:var(--s2) 0}
-}
-@media (prefers-reduced-motion:reduce){.awaiting::before{animation:none}}
+
 @media print{
  :root{--bg:#ffffff;--surface:#ffffff;--text:#000000;--line:#cccccc}
  .topbar{display:none}
@@ -184,19 +176,11 @@ body.login form{background:var(--surface);border:1px solid var(--line);border-ra
  .flag,.count,.banner,.is-err,.is-ok,tr.row-problem>*,tr.row-check>*{-webkit-print-color-adjust:exact;print-color-adjust:exact}
 }
 
-
 /* Punch editing and compact layouts */
 dialog{border:1px solid var(--line);border-radius:var(--r);padding:var(--s5);max-width:520px;width:94vw;background:var(--surface);color:var(--text)}
 dialog::backdrop{background:var(--backdrop)}
 dialog form{display:grid;gap:var(--s3)}
 dialog form .actions{justify-content:flex-end}
-@media (max-width:600px){
-.punch-review thead{display:none}
-.punch-review,.punch-review tbody,.punch-review tr,.punch-review td{display:block;width:100%}
-.punch-review tr{border:1px solid var(--line);border-radius:var(--r);margin-bottom:var(--s3);padding:var(--s3)}
-.punch-review td{padding:var(--s1) 0;border:0}
-.punch-review td:last-child{display:flex;gap:var(--s2)}
-}
 
 /* Diagnostics: shared design tokens and standard manager panels. */
 .diag-toolbar{align-items:center;justify-content:space-between;margin-bottom:var(--s4);flex-wrap:wrap}
@@ -210,7 +194,6 @@ dialog form .actions{justify-content:flex-end}
 .diag-table tr:last-child>th,.diag-table tr:last-child>td{border-bottom:1px solid var(--line)}
 .diag-table th{width:48%;font-size:var(--fs-sm);text-transform:none;letter-spacing:normal;font-weight:var(--w-medium);color:var(--muted);vertical-align:top;white-space:normal}
 .diag-table td{font-size:var(--fs-sm);overflow-wrap:anywhere;white-space:normal}
-@media (max-width:700px){.diag-grid{grid-template-columns:minmax(0,1fr)}}
 
 /* Live service activity, shared diagnostics styles. */
 .diag-log-section{margin-top:var(--s4)}
@@ -226,21 +209,12 @@ dialog form .actions{justify-content:flex-end}
 .after-table{margin-top:var(--s3)}
 input::file-selector-button{background:var(--surface);color:var(--text);border:1px solid var(--line);border-radius:var(--r-sm);padding:var(--s2) var(--s3);font-family:inherit;cursor:pointer}
 .actions a,.brand{display:inline-flex;align-items:center;min-height:var(--control-h-sm)}
-@media (max-width:700px){.clock-entry{align-items:flex-start}.clock-entry .actions{width:100%}}
 
 /* v0.9.95: phone-first administrative tables with field labels. */
-@media (max-width:600px){
- .mobile-queue,.mobile-uploads,.mobile-queue tbody,.mobile-uploads tbody,.mobile-queue tr,.mobile-uploads tr{display:block;width:100%}
- .mobile-queue thead,.mobile-uploads thead{display:none}
- .mobile-queue tr,.mobile-uploads tr{border:1px solid var(--line);border-radius:var(--r);padding:var(--s3);margin-bottom:var(--s3);background:var(--surface)}
- .mobile-queue td,.mobile-uploads td{display:grid;width:100%;grid-template-columns:minmax(92px,33%) minmax(0,1fr);gap:var(--s2);padding:var(--s2) 0;border:0;overflow-wrap:anywhere}
- .mobile-queue td::before,.mobile-uploads td::before{content:attr(data-label);font-weight:var(--w-medium);color:var(--muted)}
- .mobile-queue td:nth-child(4){font-weight:var(--w-bold)}
- .mobile-queue td:nth-child(7),.mobile-uploads td:nth-child(6){word-break:break-word}
-}
+
 /* Consistent separation of results, controls and tables. */
 section>table+*,section>.after-table,section>form+table,section>.actions+table{margin-top:var(--s3)}
-section>p[role=status],section>p[id$=Status]{margin-top:var(--s3)}
+section>p[role=status],section>p[id$=Status],form>p[role=status],input+p,progress+p[role=status]{margin-top:var(--s3)}
 section select{min-width:0;max-width:100%;text-overflow:ellipsis}
 
 /* Employee editor and compact Today display. */
@@ -249,13 +223,9 @@ section select{min-width:0;max-width:100%;text-overflow:ellipsis}
 .today-preview{display:flex;align-items:flex-start;gap:var(--s5);max-width:100%;width:fit-content}
 .today-preview canvas{display:block;width:256px;height:128px;box-sizing:content-box;image-rendering:pixelated;background:var(--oled-bg);border:8px solid var(--oled-bezel);border-radius:var(--r)}
 .today-preview-meta{display:flex;flex-direction:column;gap:var(--s2);min-width:165px}
-@media (max-width:520px){.today-preview{flex-wrap:wrap}.today-preview canvas{width:224px;height:112px}}
-
 
 /* Employee pay reviews remain stacked on narrow screens. */
-@media(max-width:600px){
- .swipe-detail td{white-space:normal}
-}
+
 /* Preserve global OLED framebuffer preview sizing. */
 
 /* Shared layout: fields cannot expand beyond a narrow card. */
@@ -263,15 +233,6 @@ form{min-width:0;max-width:100%}
 form input:not([type=checkbox]),form select{min-width:0;max-width:100%;box-sizing:border-box}
 
 /* r47: permit long names and small-screen forms without horizontal viewport overflow. */
-@media(max-width:600px){
- main,main>section{min-width:0;max-width:100%}
- section{overflow-x:auto;overscroll-behavior-x:contain}
- table{min-width:0}
- table th,table td{overflow-wrap:normal;word-break:normal}
- table button{white-space:nowrap;overflow-wrap:normal;word-break:normal}
- form .actions{flex-wrap:wrap}
- form .actions button{max-width:100%;white-space:normal}
-}
 
 /* Employee time-off portal: use a full reading width, with status always visible. */
 body.login.timeoff-employee main{max-width:var(--page-w)}
@@ -284,7 +245,7 @@ body.login.timeoff-employee section form,body.login.timeoff-public section form{
 /* Employee review: fit daily summaries at desktop widths. */
 body.login.review-employee main{max-width:var(--page-w)}
 body.login.review-employee table td{overflow-wrap:normal;word-break:normal}
-@media(max-width:600px){body.login.review-employee table{width:100%;display:block;overflow-x:auto;max-width:100%}body.login.review-employee table th,body.login.review-employee table td{padding:var(--s2)}body.login.review-employee table th:first-child,body.login.review-employee table td:first-child{white-space:nowrap;overflow-wrap:normal;word-break:normal}}
+/* Phone: day and hours on one line, the shift and its strip full width below. */
 
 .clocks-table td{white-space:nowrap}
 
@@ -297,3 +258,133 @@ body.login.review-employee table td{overflow-wrap:normal;word-break:normal}
 .absences-table{min-width:760px}
 .absences-table td:not(:nth-child(5)),.absences-table th,.absences-table button{white-space:nowrap;overflow-wrap:normal;word-break:normal}
 .absences-table td:nth-child(5){min-width:140px;overflow-wrap:break-word}
+
+/* Vacation lists keep supporting information out of the scan path. */
+.vacation-details{margin-top:var(--s1);font-size:var(--fs-sm);white-space:normal;max-width:440px}
+.vacation-details summary{cursor:pointer;color:var(--accent)}
+.vacation-details p{margin:var(--s2) 0 0;overflow-wrap:break-word}
+
+/* 10. Shift strip: one day of attendance drawn against an hour ruler.
+   Used by Overview, Punches and corrections, and the employee timesheet. Bars are positioned by script in percent. */
+.strip{position:relative;height:var(--strip-h);min-width:0}
+.strip::before{content:'';position:absolute;left:0;right:0;top:12px;height:6px;border-radius:var(--r-pill);background:var(--track)}
+.strip>span{position:absolute;display:block}
+.strip-sched{top:4px;bottom:4px;border:1px dashed var(--sched-line);border-radius:var(--r-sm);background:var(--sched-bg)}
+.strip-work{top:9px;bottom:9px;border-radius:var(--r-pill);background:var(--shift)}
+.strip-open{top:9px;bottom:9px;border-radius:var(--r-pill);background:linear-gradient(90deg,var(--shift),var(--shift-open))}
+.strip-long{top:9px;bottom:9px;border-radius:var(--r-pill);background:var(--shift);box-shadow:0 0 0 2px var(--warn)}
+.strip-late{top:9px;bottom:9px;background:repeating-linear-gradient(135deg,var(--warn) 0 2px,transparent 2px 5px);border-radius:var(--r-pill)}
+.strip-due{top:9px;bottom:9px;background:repeating-linear-gradient(135deg,var(--warn) 0 2px,transparent 2px 5px);border-radius:var(--r-pill)}
+.strip-miss{top:6px;bottom:6px;border:2px dashed var(--err);border-radius:var(--r-sm);background:var(--err-bg)}
+.strip-now{top:0;bottom:0;width:2px;transform:translateX(-50%);background:var(--now);border-radius:var(--r-pill)}
+.strip-axis{position:relative;height:18px;font-size:var(--fs-xs);color:var(--muted);font-variant-numeric:tabular-nums}
+.strip-axis>span{position:absolute;top:0;transform:translateX(-50%);white-space:nowrap}
+.strip-axis>span.is-start{transform:none}
+.strip-axis>span.is-end{transform:translateX(-100%)}
+/* Legend: the same marks as the strip, with words. */
+.strip-legend{display:flex;flex-wrap:wrap;gap:var(--s2) var(--s4);margin:0 0 var(--s3);font-size:var(--fs-sm);color:var(--muted)}
+.strip-legend>span{display:inline-flex;align-items:center;gap:var(--s2)}
+.strip-legend i{position:relative;top:0;bottom:auto;display:inline-block;width:22px;height:12px}
+.strip-legend i.strip-work,.strip-legend i.strip-open,.strip-legend i.strip-late,.strip-legend i.strip-due{height:6px}
+.strip-legend i.strip-now{width:2px;margin:0}
+
+/* Overview: today, one row per person. Name and status on the left, the day on the right. */
+.today-head{display:flex;flex-wrap:wrap;align-items:baseline;justify-content:space-between;gap:var(--s2) var(--s4);margin:0 0 var(--s3)}
+.today-head h2{margin:0}
+.today-summary{margin:0;color:var(--muted)}
+.today-grid{display:grid;grid-template-columns:minmax(130px,190px) minmax(150px,230px) minmax(0,1fr);align-items:stretch}
+.today-grid>.today-row{display:contents}
+.today-row>*{display:flex;align-items:center;padding:var(--s2) var(--s4) var(--s2) 0;border-bottom:1px solid var(--line);min-width:0}
+.today-row>.strip-cell{display:block;padding-right:0}
+.today-row:last-child>*{border-bottom:0}
+.today-row>.today-name{font-weight:var(--w-medium);overflow-wrap:break-word}
+.today-row>.today-state{flex-wrap:wrap;gap:var(--s1)}
+.today-row.is-axis>*{border-bottom:0;padding:0}
+.today-off{margin:var(--s3) 0 0;color:var(--muted);font-size:var(--fs-sm)}
+
+/* Punches and corrections: one strip per day for the chosen employee. */
+.days{display:grid;grid-template-columns:minmax(96px,130px) minmax(0,1fr) minmax(64px,auto);align-items:stretch}
+.days>.day-row{display:contents}
+.day-row>*{display:flex;align-items:center;padding:var(--s1) var(--s4) var(--s1) 0;border-bottom:1px solid var(--line);min-width:0}
+.day-row>.strip-cell{display:block}
+.day-row>:last-child{padding-right:0;justify-content:flex-end}
+.day-row:last-child>*{border-bottom:0}
+.day-row>.day-name{white-space:nowrap;font-size:var(--fs-md)}
+.day-row>.day-hours{font-variant-numeric:tabular-nums;white-space:nowrap;font-size:var(--fs-md)}
+.day-row.is-axis>*{border-bottom:0;padding:0}
+.day-row.is-selected>*{background:var(--hover)}
+a.day-pick{text-underline-offset:2px}
+tr.is-day-start>td{border-top:2px solid var(--line)}
+tr.is-highlight>td{box-shadow:inset 0 2px 0 var(--focus),inset 0 -2px 0 var(--focus)}
+
+/* Employee timesheet: hours per day as a bar against the longest day. */
+.review-progress{height:6px;margin:0 0 var(--s4);border-radius:var(--r-pill);background:var(--track);overflow:hidden}
+.review-progress>span{display:block;height:100%;background:var(--shift);border-radius:var(--r-pill)}
+td.day-strip{width:40%;min-width:120px}
+
+/* Narrow screens. Two breakpoints only: 700px narrows layouts; 600px stacks tables into cards. */
+@media (max-width:700px){
+ /* 9. Responsive, motion, print */
+ .topbar-in{flex-wrap:wrap;gap:var(--s1) var(--s3);padding:var(--s2) var(--s4)}
+ .nav{order:3;flex-basis:100%;margin:0 calc(-1 * var(--s2));justify-content:space-between;position:relative}
+ .nav a{padding:var(--s1);font-size:var(--fs-sm)}
+ .signout{margin-left:auto}
+ main{padding-top:var(--s4)}
+ section{padding:var(--s4)}
+ label:has(>input[type=checkbox]){display:flex;margin:var(--s2) 0}
+ .diag-grid{grid-template-columns:minmax(0,1fr)}
+ .clock-entry{align-items:flex-start}.clock-entry .actions{width:100%}
+ .today-grid{grid-template-columns:minmax(0,1fr)}
+ .today-row>.today-name{padding-bottom:0;border-bottom:0}
+ .today-row>.today-state{padding:var(--s1) 0 0;border-bottom:0}
+ .today-row>.strip-cell{padding-top:var(--s1)}
+ .today-row.is-axis>:not(.strip-cell){display:none}
+ .days{display:block}
+ .days>.day-row{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:'name hours' 'strip strip';border-bottom:1px solid var(--line);padding:var(--s2) 0}
+ .days>.day-row:last-child{border-bottom:0}
+ .day-row>*{border-bottom:0;padding:0}
+ .day-row>.day-name{grid-area:name}
+ .day-row>.day-hours{grid-area:hours}
+ .day-row>.strip-cell{grid-area:strip;padding-top:var(--s1)}
+ .days>.day-row.is-axis{border-bottom:0;padding:0}
+ .day-row.is-axis>:not(.strip-cell){display:none}
+}
+@media (max-width:600px){
+ .punch-review thead{display:none}
+ .punch-review,.punch-review tbody,.punch-review tr,.punch-review td{display:block;width:100%}
+ .punch-review tr{border:1px solid var(--line);border-radius:var(--r);margin-bottom:var(--s3);padding:var(--s3)}
+ .punch-review td{padding:var(--s1) 0;border:0}
+ .punch-review td:last-child{display:flex;gap:var(--s2)}
+ /* v0.9.95: phone-first administrative tables with field labels. */
+ .mobile-queue,.mobile-uploads,.mobile-queue tbody,.mobile-uploads tbody,.mobile-queue tr,.mobile-uploads tr{display:block;width:100%}
+ .mobile-queue thead,.mobile-uploads thead{display:none}
+ .mobile-queue tr,.mobile-uploads tr{border:1px solid var(--line);border-radius:var(--r);padding:var(--s3);margin-bottom:var(--s3);background:var(--surface)}
+ .mobile-queue td,.mobile-uploads td{display:grid;width:100%;grid-template-columns:minmax(92px,33%) minmax(0,1fr);gap:var(--s2);padding:var(--s2) 0;border:0;overflow-wrap:anywhere}
+ .mobile-queue td::before,.mobile-uploads td::before{content:attr(data-label);font-weight:var(--w-medium);color:var(--muted)}
+ .mobile-queue td:nth-child(4){font-weight:var(--w-bold)}
+ .mobile-queue td:nth-child(7),.mobile-uploads td:nth-child(6){word-break:break-word}
+ .today-preview{flex-wrap:wrap}.today-preview canvas{width:224px;height:112px}
+ /* Employee pay reviews remain stacked on narrow screens. */
+ .swipe-detail td{white-space:normal}
+ /* r47: permit long names and small-screen forms without horizontal viewport overflow. */
+ main,main>section{min-width:0;max-width:100%}
+ section{overflow-x:auto;overscroll-behavior-x:contain}
+ table{min-width:0}
+ table th,table td{overflow-wrap:normal;word-break:normal}
+ table button{white-space:nowrap;overflow-wrap:normal;word-break:normal}
+ form .actions{flex-wrap:wrap}
+ form .actions button{max-width:100%;white-space:normal}
+ /* Phone: day and hours on one line, the shift and its strip full width below. */
+ body.login.review-employee thead{display:none}
+ body.login.review-employee table,body.login.review-employee tbody{display:block;width:100%}
+ body.login.review-employee tr{display:grid;grid-template-columns:minmax(0,1fr) auto;grid-template-areas:'day hours' 'shift shift';border-bottom:1px solid var(--line);padding:var(--s2) 0}
+ body.login.review-employee tr:last-child{border-bottom:0}
+ body.login.review-employee table td{padding:0;border:0}
+ body.login.review-employee td:nth-child(1){grid-area:day;font-weight:var(--w-medium);white-space:nowrap}
+ body.login.review-employee td:nth-child(2){grid-area:shift;width:auto;padding-top:var(--s1)}
+ body.login.review-employee td:nth-child(3){grid-area:hours;font-variant-numeric:tabular-nums}
+ body.login.review-employee td[colspan]{grid-column:1/-1;grid-row:1}
+}
+@media (prefers-reduced-motion:reduce){.awaiting::before{animation:none}.strip>span{transition:none}}
+
+.period-actions{margin:0}

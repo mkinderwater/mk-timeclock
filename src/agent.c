@@ -28,6 +28,13 @@ static void stop(int s){(void)s;quitting=1;}
 
 static _Thread_local sqlite3 *db=NULL;
 static atomic_int server_online=0;
+static long long comms_last_ok=0;
+static pthread_mutex_t comms_lock=PTHREAD_MUTEX_INITIALIZER;
+static long long comms_now_ms(void){struct timespec t;clock_gettime(CLOCK_MONOTONIC,&t);return (long long)t.tv_sec*1000+t.tv_nsec/1000000;}
+static void comms_mark_ok(void){pthread_mutex_lock(&comms_lock);comms_last_ok=comms_now_ms();pthread_mutex_unlock(&comms_lock);}
+static long long comms_last_ok_ms(void){pthread_mutex_lock(&comms_lock);long long last=comms_last_ok;pthread_mutex_unlock(&comms_lock);return last;}
+#include "comms_warning.h"
+static atomic_int display_hour24=0;
 static atomic_int dim_enabled=1,dim_start=1140,dim_end=420,dim_normal=127,dim_low=24;
 static char configured_clock_id[49]="";
 static struct curl_slist *with_clock_id(struct curl_slist *h){char field[80];snprintf(field,sizeof field,"X-Clock-ID: %s",configured_clock_id);return curl_slist_append(h,field);}
@@ -152,6 +159,11 @@ static void beep_tick(void){
  if(b->index>=b->pattern->length){gpio_set(b->fd,0);b->active=0;return;}
  gpio_set(b->fd,(b->index%2)==0);
  b->until=deadline_ms(b->pattern->durations[b->index]);
+}
+static void comms_reminder_tick(struct comms_warning*warning,long long now,long long last_ok,int enabled,int fd,int busy){
+ if(!enabled||fd<0)return;
+ if(last_ok>0&&now-last_ok<180000&&buzzer_state.active&&buzzer_state.pattern==&buzz_comms){gpio_set(fd,0);buzzer_state.active=0;}
+ if(comms_warning_due(warning,now,last_ok,busy||buzzer_state.active))play_pattern(fd,&buzz_comms);
 }
 static void capture_frame(void){
  if(!disp.ready)return;
@@ -331,6 +343,13 @@ static int flush(const char *base,const char *key){
             CURLcode rc=curl_easy_perform(c);long http=0;curl_easy_getinfo(c,CURLINFO_RESPONSE_CODE,&http);
             if(rc!=CURLE_OK){free(reply.data);fprintf(stderr,"sync transport error: %s\n",curl_easy_strerror(rc));sent=-1;break;}
             if(http==200){
+                /* HTTP success alone is not a durable attendance acknowledgment. */
+                if(!reply.data || !strstr(reply.data,"\"status\":\"accepted\"") ||
+                   !strstr(reply.data,"\"classification\":\"")){
+                    fprintf(stderr,"sync: unrecognized 200 response; retaining pending swipe\n");
+                    free(reply.data);sent=-1;break;
+                }
+                comms_mark_ok(); /* Each accepted event proves recovery immediately, even during a long batch. */
                 int feedback=0;
                 if(reply.data){if(strstr(reply.data,"\"classification\":\"DUPLICATE\""))feedback=5;
                  else if(strstr(reply.data,"\"classification\":\"IN_LATE\""))feedback=3;
@@ -375,6 +394,12 @@ static void apply_remote_font(const char *name){
  if(fprintf(f,"%s\n",name)<0||fclose(f)!=0){unlink(tmp);return;}
  if(rename(tmp,dest)!=0)unlink(tmp);
 }
+static void apply_remote_format(int value){
+ const char *path="/var/lib/timeclock/display-hour24.txt",*temp="/var/lib/timeclock/display-hour24.txt.tmp";
+ FILE*f=fopen(path,"r");int old=-1;if(f){if(fscanf(f,"%d",&old)!=1)old=-1;fclose(f);}
+ if(old!=value){f=fopen(temp,"w");if(!f)return;int ok=fprintf(f,"%d\n",value)>0;if(fclose(f)!=0)ok=0;if(!ok||rename(temp,path)!=0){unlink(temp);return;}}
+ atomic_store(&display_hour24,value);
+}
 static void refresh_dim_settings(const char *base,const char *key){
  char url[768],hdr[256];snprintf(url,sizeof url,"%s/api/v1/clock/dim",base);snprintf(hdr,sizeof hdr,"X-Device-Key: %s",key);
  CURL*c=curl_easy_init();if(!c)return;struct curl_slist*h=with_clock_id(curl_slist_append(NULL,hdr));struct buffer b={0};
@@ -385,6 +410,8 @@ static void refresh_dim_settings(const char *base,const char *key){
   if(sscanf(b.data,"{\"enabled\":%d,\"start_min\":%d,\"end_min\":%d,\"normal_contrast\":%d,\"dim_contrast\":%d}",&e,&st,&en,&n,&d)==5&&e>=0&&e<=1&&st>=0&&st<1440&&en>=0&&en<1440&&st!=en&&n>=1&&n<=255&&d>=1&&d<=n){
     atomic_store(&dim_enabled,e);atomic_store(&dim_start,st);atomic_store(&dim_end,en);atomic_store(&dim_normal,n);atomic_store(&dim_low,d);
     const char *key=strstr(b.data,",\"font\":\"");
+    const char *fmt=strstr(b.data,",\"hour24\":");int value=-1;
+    if(fmt&&sscanf(fmt,",\"hour24\":%d",&value)==1&&(value==0||value==1))apply_remote_format(value);
     if(key){char name[80]={0};if(sscanf(key,",\"font\":\"%79[^\"]\"",name)==1)apply_remote_font(name);}
   }
  }free(b.data);
@@ -433,6 +460,7 @@ static void flush_rejected(const char *base,const char *key){
   }
  }sqlite3_finalize(q);curl_slist_free_all(h);curl_easy_cleanup(c);
 }
+#include "agent_health.h"
 struct network_args {const char *base,*key,*clock,*queue_path;};
 static void *network_worker(void *v){
  const struct network_args *a=v;
@@ -440,12 +468,12 @@ static void *network_worker(void *v){
  sqlite3_busy_timeout(db,1000);
  /* Queue is the sole copy of unsent punches, so keep its writes durable. */
  if(!sql("PRAGMA journal_mode=WAL; PRAGMA synchronous=FULL;")){sqlite3_close(db);db=NULL;return NULL;}
- time_t last_cache=0,last_preview=0;
+ time_t last_cache=0,last_preview=0,last_health=0;
  unsigned long last_published_generation=0;
  while(!quitting){
   time_t now=time(NULL);
   if(now-last_cache>=30){
-   int ok=refresh_cache(a->base,a->key);atomic_store(&server_online,ok);
+   int ok=refresh_cache(a->base,a->key);atomic_store(&server_online,ok);if(ok)comms_mark_ok();
    /* Display settings must refresh even if card-cache synchronization fails. */
    if(!quitting)refresh_dim_settings(a->base,a->key);
    if(!quitting)flush_unknown(a->base,a->key,a->clock);
@@ -453,9 +481,10 @@ static void *network_worker(void *v){
    last_cache=now;
   }
   if(quitting)break;
+  if(now-last_health>=30){publish_health(a->base,a->key,a->clock);last_health=now;}
   int sent=flush(a->base,a->key);
   if(sent<0)atomic_store(&server_online,0);
-  else if(sent>0)atomic_store(&server_online,1);
+  else if(sent>0){atomic_store(&server_online,1);comms_mark_ok();}
   uint8_t frame[OLED_BYTES];int ready;unsigned long generation;
   pthread_mutex_lock(&frame_lock);ready=shared_frame_ready;generation=frame_generation;
   if(ready)memcpy(frame,shared_frame,sizeof frame);
@@ -513,6 +542,8 @@ int main(int argc,char**argv){if(argc<8){fprintf(stderr,"Usage: %s QUEUE_DB CLOC
  fprintf(stderr,"Attendance recording: %s\n",attendance_enabled?"ENABLED":"DISABLED (enrollment/display only)");
  curl_global_init(CURL_GLOBAL_DEFAULT);
  if(argc>=10){unsigned a=argc>10?(unsigned)strtoul(argv[10],NULL,0):0x3C;if(display_open(&disp,argv[8],a,argv[9],clock)<0)fprintf(stderr,"OLED unavailable; RFID still operates\n");}
+ FILE*format_file=fopen("/var/lib/timeclock/display-hour24.txt","r");if(format_file){int value=0;if(fscanf(format_file,"%d",&value)==1&&(value==0||value==1))atomic_store(&display_hour24,value);fclose(format_file);}
+ disp.hour24=atomic_load(&display_hour24);
  signal(SIGINT,stop);signal(SIGTERM,stop);
  /* display_open() has already sent the boot logo as the first content frame.
     Hold it for two seconds, then transition directly to the idle clock. */
@@ -526,6 +557,8 @@ int main(int argc,char**argv){if(argc<8){fprintf(stderr,"Usage: %s QUEUE_DB CLOC
  struct scan_worker_args scan_args={base,key};pthread_t scan_thread;
  if(pthread_create(&scan_thread,NULL,scan_worker,&scan_args)!=0){fprintf(stderr,"scan worker failed\n");quitting=1;pthread_join(net_thread,NULL);return 1;}
  
+ const char*role=getenv("TIMECLOCK_ROLE");int slave_comms=role&&!strcmp(role,"slave");
+ struct comms_warning comms_warning={.next=comms_now_ms()+180000};long long last_card_ms=0;
  int read_failure=0;time_t font_checked=0,wifi_checked=0;char loaded_font[100]="";
  while(!quitting){beep_tick();display_tick(&disp);int result=atomic_exchange(&feedback_result,0);
    if(result){
@@ -560,6 +593,9 @@ int main(int argc,char**argv){if(argc<8){fprintf(stderr,"Usage: %s QUEUE_DB CLOC
    for(int i=0;i<ncompleted;i++)process_scan(completed[i].uid,completed[i].result,
       completed[i].manager,attendance_enabled,clock,buzzer);
    time_t now=time(0);online=atomic_load(&server_online);
+   long long comms_now=comms_now_ms(),last_ok=comms_last_ok_ms();
+   if(slave_comms){online=last_ok>0&&comms_now-last_ok<180000;
+   }
    if(disp.ready && (wifi_checked==0||now-wifi_checked>=10)){
      wifi_checked=now;struct tc_wifi wifi=tc_wifi_read();
      if(disp.wifi_associated!=wifi.associated || disp.wifi_bars!=wifi.bars){
@@ -570,6 +606,7 @@ int main(int argc,char**argv){if(argc<8){fprintf(stderr,"Usage: %s QUEUE_DB CLOC
      if(strcmp(name,loaded_font)&&strchr(name,'/')==NULL&&strchr(name,'\\')==NULL&&strncmp(name,"custom-",7)!=0){char file[256];snprintf(file,sizeof file,"/usr/share/fonts/truetype/dejavu/%s",name);ttf_t*next=ttf_open(file);if(next){ttf_t*old=disp.font;disp.font=next;ttf_close(old);snprintf(loaded_font,sizeof loaded_font,"%s",name);last_display=0;}}}fclose(f);}}
 
    if(disp.ready){
+       disp.hour24=atomic_load(&display_hour24);
        struct tm local;localtime_r(&now,&local);
        int minute=local.tm_hour*60+local.tm_min,st=atomic_load(&dim_start),en=atomic_load(&dim_end);
        int active=atomic_load(&dim_enabled)&&(st<en?(minute>=st&&minute<en):(minute>=st||minute<en));
@@ -589,6 +626,7 @@ int main(int argc,char**argv){if(argc<8){fprintf(stderr,"Usage: %s QUEUE_DB CLOC
      /* Enrollment takes priority, even when this UID is already present.
         A scan cannot create an attendance event. */
      if(fresh){
+       last_card_ms=comms_now_ms();
        if(atomic_load(&server_online)){
          if(enqueue_scan(uid,scan_now)<0){
            fprintf(stderr,"Remote scan queue full: refusing attendance until next presentation\n");
@@ -598,6 +636,7 @@ int main(int argc,char**argv){if(argc<8){fprintf(stderr,"Usage: %s QUEUE_DB CLOC
        }else process_scan(uid,0,0,attendance_enabled,clock,buzzer);
      }
    }
+   comms_reminder_tick(&comms_warning,comms_now_ms(),comms_last_ok_ms(),slave_comms,buzzer,display_busy(&disp)||comms_now_ms()-last_card_ms<2000);
    if(display_busy(&disp))atomic_store(&preview_urgent,1);
    capture_frame();pause_ms(buzzer_state.active?2:20);}
 

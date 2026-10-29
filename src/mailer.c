@@ -12,6 +12,7 @@
 #include <stdint.h>
 #include <sys/wait.h>
 #include <sys/stat.h>
+#include "common.h"
 
 static volatile sig_atomic_t stopping=0;
 static void on_stop(int s){(void)s;stopping=1;}
@@ -20,11 +21,6 @@ static size_t read_payload(char *p,size_t size,size_t nmemb,void *arg){
  struct payload *m=arg;size_t cap=size*nmemb,rem=m->length-m->offset;
  if(cap>rem)cap=rem;
  memcpy(p,m->data+m->offset,cap);m->offset+=cap;return cap;
-}
-static int safe_address(const char *v){
- if(!v||!strchr(v,'@')||strlen(v)>250)return 0;
- for(;*v;v++)if(*v=='\r'||*v=='\n'||(unsigned char)*v<32)return 0;
- return 1;
 }
 /* Subject header: CR/LF become spaces. Pure ASCII is sent as-is; anything else is
    RFC 2047 encoded (UTF-8, base64) in words of at most 42 input bytes, never splitting
@@ -192,7 +188,7 @@ static int smtp_response_debug(CURL *handle,curl_infotype type,char *data,size_t
  return 0;
 }
 static int smtp_send(const char *url,const char *user,const char *pass,const char *tls_mode,const char *from,const char *from_name,const char *to,const char *subject,const char *body,const unsigned char *attachment,size_t attachment_len,const char *filename,const char *message_token,char *error,size_t error_size){
- if(!safe_address(from)||!safe_address(to))return -1;
+ if(!email_address_ok(from)||!email_address_ok(to))return -1;
  char *msg=build_message(from,from_name,to,subject,body,attachment,attachment_len,filename,message_token);if(!msg)return -1;
  CURL *c=curl_easy_init();if(!c){free(msg);return -1;}
  struct payload p={msg,strlen(msg),0};struct curl_slist *recipients=NULL;char smtp_reply[240]="";
@@ -236,20 +232,11 @@ static void queue_terminal_failure_notice(sqlite3 *db,int failed_id,const char *
  if(sqlite3_prepare_v2(db,"SELECT recipient FROM payroll_settings WHERE id=1",-1,&q,NULL)==SQLITE_OK&&sqlite3_step(q)==SQLITE_ROW){
   const unsigned char*t=sqlite3_column_text(q,0);if(t)snprintf(payroll,sizeof payroll,"%s",(const char*)t);
  }sqlite3_finalize(q);q=NULL;
- if(!strchr(payroll,'@')||strpbrk(payroll,"\r\n"))return;
- if(sqlite3_prepare_v2(db,"SELECT subject,body FROM email_templates WHERE id='email_failure_payroll' AND enabled=1",-1,&q,NULL)!=SQLITE_OK)return;
- if(sqlite3_step(q)==SQLITE_ROW){
-  const char *ts=(const char*)sqlite3_column_text(q,0),*tb=(const char*)sqlite3_column_text(q,1);
-  const struct email_field vars[]={{"{{recipient}}",recipient},{"{{failed_subject}}",failed_subject}};
-  char*rs=email_render(ts,vars,2),*rb=email_render(tb,vars,2);
-  if(rs&&rb&&strlen(rs)<sizeof subject&&strlen(rb)<sizeof body){snprintf(subject,sizeof subject,"%s",rs);snprintf(body,sizeof body,"%s",rb);}
-  free(rs);free(rb);
- }sqlite3_finalize(q);q=NULL;
- if(!subject[0]||!body[0])return;
+ if(!email_address_ok(payroll))return;
+ const struct email_field vars[]={{"{{recipient}}",recipient},{"{{failed_subject}}",failed_subject}};
+ if(template_render(db,"email_failure_payroll",vars,2,subject,sizeof subject,body,sizeof body)<=0||!subject[0]||!body[0])return;
  snprintf(event,sizeof event,"email_terminal_failure:%d",failed_id);
- if(sqlite3_prepare_v2(db,"INSERT OR IGNORE INTO email_queue(recipient,subject,body,status,next_attempt,event_id) VALUES(?1,?2,?3,'pending',strftime('%Y-%m-%dT%H:%M:%fZ','now'),?4)",-1,&q,NULL)==SQLITE_OK){
-  sqlite3_bind_text(q,1,payroll,-1,SQLITE_TRANSIENT);sqlite3_bind_text(q,2,subject,-1,SQLITE_TRANSIENT);sqlite3_bind_text(q,3,body,-1,SQLITE_TRANSIENT);sqlite3_bind_text(q,4,event,-1,SQLITE_TRANSIENT);(void)sqlite3_step(q);
- }sqlite3_finalize(q);
+ (void)email_enqueue(db,payroll,subject,body,event,NULL);
 }
 static int process_one(sqlite3 *db){
  sqlite3_stmt *q=NULL;int id=0;char *recipient=NULL,*subject=NULL,*body=NULL,*csv=NULL;int attempts=0,alert_is_failure=0;char begin[11]="",end[11]="",token[33]="";
@@ -259,7 +246,7 @@ static int process_one(sqlite3 *db){
  sqlite3_finalize(q);if(!id)return 0;
  if(!recipient||!subject||!body){free(recipient);free(subject);free(body);free(csv);return -1;}
  char url[260]="",user[260]="",pass[260]="",tls[20]="",from[260]="",from_name[260]="";
- int configured=smtp_config(db,url,user,pass,tls,from,from_name)&&url[0]&&safe_address(from);
+ int configured=smtp_config(db,url,user,pass,tls,from,from_name)&&url[0]&&email_address_ok(from);
  if(!configured){
   sqlite3_stmt *defer=NULL;
   if(sqlite3_prepare_v2(db,"UPDATE email_queue SET last_error='SMTP is not configured; configure SMTP settings',next_attempt=strftime('%Y-%m-%dT%H:%M:%fZ','now','+5 minutes') WHERE id=?1",-1,&defer,NULL)==SQLITE_OK){sqlite3_bind_int(defer,1,id);sqlite3_step(defer);}

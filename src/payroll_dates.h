@@ -1,5 +1,7 @@
+#include "common.h"
 /* Shared payday/date rules. All dates are local calendar days at noon. */
 static time_t payroll_day(const char*s){
+ if(!date_valid(s))return (time_t)-1;
  int y=0,m=0,d=0; if(sscanf(s,"%d-%d-%d",&y,&m,&d)!=3)return (time_t)-1;
  struct tm t={0};t.tm_year=y-1900;t.tm_mon=m-1;t.tm_mday=d;t.tm_hour=12;t.tm_isdst=-1;
  time_t x=mktime(&t);struct tm check;localtime_r(&x,&check);
