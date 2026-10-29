@@ -1,252 +1,314 @@
+# mk-timeclock Lite RC6.1
+
+See RELEASE_NOTES_RC6.1.md for changes and validation limits.
+
+Adopts the supplied GUI improvements while preserving RC5.19 installer and Slave approval fixes. Update the Primary for the manager/employee GUI and the Slave for its shared setup stylesheet. See RELEASE_NOTES_RC5.23.md.
+
+> Current source release: RC5.23. See [release notes](RELEASE_NOTES_RC5.16.md).
+
 # mk-timeclock Lite
 
-A free, self-hosted RFID employee time clock for the **Banana Pi BPI-M2 Zero**, developed by **iCube Development (Calgary) Ltd.**
+RFID attendance recording, employee vacation requests, and payroll reporting for the **Banana Pi BPI-M2 Zero**.
 
-Tap a card to clock IN or OUT. Manage attendance and vacation in your browser. Export payroll to Excel or CSV. **No subscription, per-employee fees or required cloud account.**
+Developed by **iCube Development (Calgary) Ltd.** The clock combines an RC522 reader, a 128 × 64 OLED, audible swipe feedback, and a browser-based manager interface. A single device can operate as the Primary, or additional Secondary clocks can send attendance to it.
 
-Attendance is stored locally. Email needs access to your SMTP server; Secondary clocks need a network connection to upload queued punches to the Primary.
+**Attendance rules:** IN starts recorded elapsed time; OUT ends it. Missing punches are flagged. The application does not invent an OUT, deduct breaks, calculate overtime pay, or decide which hours are payable.
 
-Current release: **1.9.5-RC3-cleanup27**.
+This README describes **1.9.5-RC5.23**. The release contains source code and installation scripts, not an operating-system image.
 
-**[Download the latest mk-timeclock](https://github.com/mkinderwater/mk-timeclock/releases)**
+## Contents
 
-> **Building a clock?** The [Build and Install Guide (PDF)](Timeclock-Build-and-Install-Guide.pdf) has detailed step-by-step instructions, from printing the case to hanging the finished clock on the wall. It needs no previous experience and includes a shopping list, photos, soldering steps, a wiring checklist and troubleshooting.
-
-## The clock
-
-| Front | External Wi-Fi Version | Back | Inside |
-| :---: | :---: | :---: | :---: |
-| [<img src="front.png" alt="Front of the mk-timeclock" width="220">](front.png) | [<img src="front-external-wifi.png" alt="Front of the mk-timeclock with external Wi-Fi antenna" width="220">](front-external-wifi.png) | [<img src="back.png" alt="Back of the mk-timeclock" width="220">](back.png) | [<img src="internals.png" alt="Internal assembly of the mk-timeclock" width="220">](internals.png) |
-
-Choose the internal or external Wi-Fi antenna enclosure in the OpenSCAD source before exporting the printable parts. Click a photo to view it full size.
-
-## The management interface
-
-Screenshots use fictional employees. Click an image to view it full size.
-
-### Review attendance
-
-**See who arrived late or left early, and by how many minutes.** Overview shows today's punches and the clock display, with a link to corrections. Lunch OUT/IN punches remain in the record.
-
-[![Overview showing employee punches, a late arrival and an early departure](overview.png)](overview.png)
-
-### Manage vacation
-
-**Waiting requests come first.** Approve or deny them, record vacation approved elsewhere, and filter upcoming or past bookings by employee and year. Stat holidays are counted separately. Download the annual report as an Excel-compatible CSV.
-
-[![Vacation management showing waiting requests, approved bookings, holiday exclusions and annual reporting](vacation.png)](vacation.png)
+- [Features](#features)
+- [Hardware and operating system](#hardware-and-operating-system)
+- [Pinouts and wiring](#pinouts-and-wiring)
+- [Installation](#installation)
+- [First setup](#first-setup)
+- [Additional clocks](#additional-clocks)
+- [Payroll and vacation reporting](#payroll-and-vacation-reporting)
+- [Backups and recovery](#backups-and-recovery)
+- [Configuration and services](#configuration-and-services)
+- [Troubleshooting](#troubleshooting)
+- [Development and verification](#development-and-verification)
+- [Further documentation](#further-documentation)
 
 ## Features
 
-### For business owners
+### Attendance and employees
 
-- **Attendance:** RFID IN/OUT, names on the display, audible confirmation and a Who is in view.
-- **Exceptions:** weekly or dated schedules, grace, late arrivals, early departures and missing punches. Manager corrections and notes are audited.
-- **Employees:** name search, company Employee IDs, attendance cards and separate manager cards.
-- **Payroll:** weekly, biweekly, twice-monthly or monthly periods; timesheet approval, manager overrides and saved CSV/Excel revisions.
-- **Vacation:** requests, approvals, historical entries, annual usage and allowances. Add holidays manually or import CSV.
-- **Email:** scheduled timesheet links and payroll reports, editable templates and your SMTP server.
-- **Backups:** daily local archives, optional emailed copies, download and restore.
+- RFID attendance using RC522 cards and fobs, with employee names and IN/OUT feedback on the OLED.
+- Different audible feedback for accepted and rejected scans, without blocking the reader loop.
+- Persistent local swipe queue and cached employee cards for network interruptions. Accepted queued attendance is uploaded when connectivity returns.
+- Employee creation, multiple attendance cards, lost-card replacement, and card activation/deactivation.
+- Separate manager cards for protected changes. Manager-card scans do not record attendance.
+- Recurring weekly schedules, dated shifts, and a no-schedule option.
+- Per-clock late grace and repeat-swipe settings, with late-arrival and early-departure notices and private explanation links.
+- Manager corrections, recorded absences, and audit history.
+- Punch-required and vacation-only employee modes.
 
-### For installers and resellers
+### Employee vacation
 
-- A Primary hosts management and records. Approved Secondary clocks queue punches during outages and upload when reconnected.
-- Install from the prepared OS image and source ZIP.
-- Manage clock names, HTTPS certificates, email and device health through the browser.
-- Commercial use and redistribution are permitted under [AGPL-3.0](#license).
+- Read-only timesheet links for viewing recorded shifts and leave; employees contact their manager about corrections.
+- Private vacation links with manager approval, denial, cancellation, and email notifications.
+- Manager entry of vacation approved verbally or by email, including past vacation before installation, without entry emails.
+- Vacation forms contain dates, calculated working days, return date and optional notes. Other absences are recorded separately.
+- Optional annual vacation allowance, including zero and half-day allowance values.
+- **X of Y days used** on the time-off form and reports. Requests can exceed the allowance; there is no accrual or balance enforcement.
+- Annual vacation CSV export and manual or CSV holiday entry.
 
-### For makers and developers
+### Reporting and administration
 
-- Common modules, a printable enclosure and documented wiring.
-- C, SQLite, Python and shell on Linux.
-- Source, build scripts and automated workflow checks included.
+- Weekly, biweekly, twice-monthly, and monthly pay-period schedules.
+- Closed-period exports with preserved CSV revisions and revised-report delivery.
+- Excel workbooks with **Payroll Summary** and **Daily Detail** tabs.
+- Employee ID columns, employee-grouped detail, alternating block shading, AutoFilter, and Summary links to each employee's detail.
+- Independent local send times for payroll reports and timesheet links, including zero-day offsets.
+- SMTP sender name/address, editable email templates, delivery queue, and retry status.
+- HTTPS certificate installation, time synchronization, local timezone selection, display settings, clock adoption, system health, and diagnostics.
+- Local backup/download/restore workflows and optional scheduled backup email.
 
-**IN starts recorded time. OUT stops it.** Missing punches are flagged, not filled in. There are no automatic break deductions, overtime pay calculations or wage calculations. Payroll decides what is payable.
+**Touch input is not implemented in this release.** A TTP223 module is not required and has no assigned connection in the current agent.
 
-## Estimated build cost
+The Overview **Today** attendance widget includes only active **Punch required** employees. Vacation-only staff are exempt from its rows, counts and **Not scheduled today**, even if they retain a schedule or recorded punches. Their records and vacation workflow remain available.
 
-Budget **C$90–150 per clock**, typically **C$120** at estimated 2026 prices. This includes electronics, microSD, power supply and printed-case material. Shipping, tax, tools, labour and extra cards are additional.
+## Manager workflow
 
-## What you need
+Main navigation has **Overview**, **Attendance**, **Employees**, **Pay periods**, **Vacation** and **Settings**.
 
-The [Build and Install Guide (PDF)](Timeclock-Build-and-Install-Guide.pdf) has the full shopping list, with screw sizes and quantities.
+- Overview shows Today and outstanding setup/delivery issues. Employee names open their Attendance record directly.
+- Attendance contains punches, corrections, absences and manager notes. Shift state, active status and interval seconds come from the server's canonical effective pairs; the browser does not pair punches.
+- Select an employee to manage their profile, cards, schedule and notification choices in one record. Card changes retain manager-card authorization and audit safeguards. Settings → Bulk schedules uses the same schedule editor for switching between staff.
+- Pay periods shows hours, unresolved issues, manager review and report versions. Closed-period rows offer their latest saved download; selecting Review also selects that period's revision history. Period schedule setup is collapsed and linked from Settings.
+- Settings groups Company, Email, Clock and Audit tools. Clock display preview is with Clock display. Raw swipe export remains an audit tool. Optional per-swipe receipt emails and the duplicate Who is in/Card status screens are removed.
 
-| Component | Specification |
+Recorded means captured attendance; Reviewed means a manager checked it; Sent means the mail server accepted it. Payroll decides payable time separately.
+
+## Build and install overview
+
+Use the **Timeclock Build and Install Guide** for the illustrated assembly sequence. This README provides the matching wiring reference, software commands, features, and maintenance details.
+
+1. **Build:** print case v8.34, solder right-angle headers, convert the OLED to I²C, mount the components, then connect and check all 14 wires with power disconnected.
+2. **Software:** write the bpi-zero-wbuild 3.13 image, configure Wi-Fi and SSH access, start the clock, copy the software, then install the chosen role.
+3. **Finish:** create the first manager, test the display and cards, close the case, and mount it.
+
+**Primary** is the first or only clock and hosts the database and management website. **Secondary** means an additional reader clock. The source, service messages, and installer filename use the term `slave` for this role.
+
+## Hardware and operating system
+
+| Component | Project setup |
 | --- | --- |
 | Computer | Banana Pi BPI-M2 Zero |
-| Storage | microSD card, 16 GB or larger |
-| RFID reader | RC522 / MFRC522 with compatible 13.56 MHz cards or fobs |
-| Display | 2.42-inch SSD1309 OLED, 128 × 64, configured for I²C |
-| Buzzer | Compatible two-wire active buzzer |
-| Power | USB-C power breakout and regulated 5 V, 2 A supply |
-| Wi-Fi antenna | Internal: stick-on 2.4 GHz PCB antenna with IPEX/u.FL lead. External: 2.4 GHz antenna with matching bulkhead connector and IPEX/u.FL pigtail |
-| Network | 2.4 GHz Wi-Fi |
-| Assembly | Jumper wires, headers, fasteners and optional printed case |
+| Operating system | Project-prepared 32-bit Debian/Armbian-based image with systemd and apt |
+| Reader | RC522 / MFRC522 SPI module; compatible 13.56 MHz cards or fobs |
+| Display | 2.42-inch SSD1309 OLED, 128 × 64, seven-pin PCB converted to I²C as described below |
+| Audible feedback | Supported active buzzer or a 3.3 V-compatible buzzer driver |
+| Storage | microSD with space for SQLite data, exports, and backups |
+| Power | Stable board power supply; the manufacturer's board specification lists 5 V / 2 A |
+| Network | Network access for management, time synchronization, SMTP, and Primary/Secondary communication |
 
-### Component photos
+The installer currently requires:
 
-Use these images to identify parts. Check your board markings against the wiring tables before connecting power.
+- Debian architecture `armhf` and a 32-bit ARM machine type.
+- The prepared-image marker `/etc/bpi-zero-wbuild-release`.
+- `/dev/spidev0.0`, `/dev/i2c-0`, and `/dev/gpiochip0`.
+- Linux GPIO character-device v2 support, used by the buzzer code.
 
-| RFID reader and credentials | 2.42-inch OLED display |
-| :---: | :---: |
-| [![RC522 RFID reader, card, fob and eight-pin header](rfid.png)](rfid.png) | [![Front and rear of the seven-pin SSD1309 OLED display](oled.png)](oled.png) |
-| **RC522 / MFRC522, 13.56 MHz.** Reader, card, fob and header. | **SSD1309, 128 × 64.** Seven-pin board configured for I²C. |
+A generic Debian or Armbian image is not automatically a supported installation. Enable the required interfaces using the image's configuration tools before installation. Do not create the marker file merely to bypass the platform check.
 
-| USB-C power breakout | Active buzzer |
-| :---: | :---: |
-| [![USB-C breakout board showing G, positive D, negative D and V pads](usb-c.png)](usb-c.png) | [![Two views of a wired active buzzer showing its housing and voltage marking](buzzer.png)](buzzer.png) |
-| **USB-C breakout.** Connect `V` and `G` for power. | **Two-wire active buzzer.** Red and black leads. |
+### Case and assembly
 
-PCB layouts vary. Use the [wiring tables](#wiring) and the OLED resistor labels below to identify connections.
+The illustrated build uses **case v8.34**, right-angle 2.54 mm headers, 14 female-to-female jumper wires, a stick-on IPEX/u.FL Wi-Fi antenna, a two-wire active buzzer with mounting ears, and a USB-C power breakout.
 
-### Print the enclosure
+| Fasteners | Quantity | Component |
+| --- | ---: | --- |
+| M2 × 5 mm self-tapping | 8 | OLED and RC522, four each |
+| M2 × 6 mm self-tapping | 6 | BPI, four; USB-C board, two |
+| M2 × 8 mm self-tapping | 2 | Buzzer ears |
+| M3 × 12 mm countersunk self-tapping | 4 | Rear cover |
 
-**PLA or ASA. ASA recommended. No supports required.**
+Print the OLED fit-test piece before the front and rear cover. The guide specifies a 0.4 mm nozzle, 0.24 mm layers, three walls, 20% infill, no supports, and PETG or PLA. Keep the supplied print orientation. Tighten self-tapping screws gently.
 
-Case v8.34 uses internal M2 × 5 mm fasteners for the OLED and RC522. Use right-angle headers to fit the enclosure.
+Use right-angle headers so the cover can close. The OLED header points inward over the PCB. Mount its glass from inside using the four internal M2 × 5 mm fasteners. Keep wires clear of the display ribbon and cover rim. Leave the cover off until testing is complete.
 
-Print the [front](https://github.com/mkinderwater/mk-timeclock/blob/main/front.stl) and [back](https://github.com/mkinderwater/mk-timeclock/blob/main/back.stl). View the [assembled model](https://github.com/mkinderwater/mk-timeclock/blob/main/assembled.stl) to see how they fit together.
+## Pinouts and wiring
 
-Place the front with its outside face on the bed, and the back with its flat outside face on the bed. Start from your printer's profile for the material, with a 0.4 mm nozzle, 0.24 mm layers, 3 walls and 20% infill. To regenerate a part, open the [SCAD source](https://github.com/mkinderwater/mk-timeclock/blob/main/bpi_rfid_timeclock_v8_34_two_piece.scad) in OpenSCAD; the standard build uses the published STLs.
+**Numbers below are physical positions on the BPI-M2 Zero's 40-pin header, not Raspberry Pi BCM GPIO numbers.** Check the board's pin-1 marking before connecting anything. Disconnect power while wiring and use a common ground.
 
-**Choose the antenna version before exporting.** Open the SCAD source in OpenSCAD and select the internal or external Wi-Fi antenna option. Render and export the required enclosure parts as STL. For the external version shown above, use the enclosure with the antenna connector opening; check the opening against your bulkhead connector before printing. Changing the SCAD selection does not change the already published STL files.
+Board mapping reference: [Banana Pi BPI-M2 Zero manufacturer pinout](https://wiki.banana-pi.org/Banana_Pi_BPI-M2_ZERO#GPIO_PIN_define).
 
-For wall mounting, print the [wall mounting template](Timeclock-Wall-Mounting-Template.pdf) at 100% / Actual size and check its 80 mm reference before drilling.
+### RC522 reader: SPI0
 
-## Wiring
-
-The tables below are a quick reference. For step-by-step soldering, the OLED I²C change (including removing the display ribbon to reach R9 to R12), assembly order and a wiring checklist, follow the [Build and Install Guide (PDF)](Timeclock-Build-and-Install-Guide.pdf).
-
-![Wiring guide](https://raw.githubusercontent.com/mkinderwater/mk-timeclock/main/wiring-guide.png)
-
-These are **physical pin numbers** on the Banana Pi's 40-pin header. Pin 1 is the square pad nearest the microSD slot; odd pins are on the inner row and even pins along the board edge. Disconnect power while wiring. The reader and display use 3.3 V: **never connect either to a 5 V pin** (2 or 4).
-
-The complete build uses **14 header wires** plus the antenna lead. RC522 IRQ and RST, and OLED RES, DC and CS, stay unconnected.
-
-### Wi-Fi antenna
-
-Choose either antenna arrangement and select the matching enclosure option in the SCAD source:
-
-- **Internal:** use a 2.4 GHz PCB antenna with an IPEX/u.FL lead. Mount it vertically inside the front panel, to the right of the RC522, as shown in the internal photo. Route the lead around the lower edge.
-- **External:** use a 2.4 GHz antenna and a matching bulkhead-to-IPEX/u.FL pigtail. Secure the bulkhead connector in the enclosure opening, then attach the antenna outside, as shown in [the external Wi-Fi photo](front-external-wifi.png). Match the antenna and pigtail connector type, including SMA versus RP-SMA.
-
-Both arrangements connect to the gold antenna socket near the Banana Pi’s HDMI connector. Route the coax clear of screw posts and case edges, without sharp bends or pinching.
-
-### RC522: SPI0
-
-| RC522 | BPI pin | Signal |
+| RC522 label | Physical pin | BPI signal |
 | --- | ---: | --- |
 | 3.3V | 17 | 3.3 V |
 | GND | 20 | Ground |
-| SDA / SS | 24 | PC3, chip select |
-| SCK | 23 | PC2 |
-| MOSI | 19 | PC0 |
-| MISO | 21 | PC1 |
+| SDA / SS / NSS | 24 | PC3, SPI0 chip select |
+| SCK | 23 | PC2, SPI0 clock |
+| MOSI | 19 | PC0, SPI0 MOSI |
+| MISO | 21 | PC1, SPI0 MISO |
+| RST | Not connected | As assembled in the illustrated build |
+| IRQ | Not connected | Unused |
 
-The RC522's SDA pin is SPI chip select in this setup.
+**The RC522 pin labelled SDA is required. In SPI mode it is chip select, not I²C SDA.** Connect it to pin 24, not pin 3.
+
+The illustrated build leaves both RC522 IRQ and RST unconnected. The driver uses `/dev/spidev0.0` at 250 kHz, performs reader reset over SPI, and does not drive a reset GPIO. The module must hold its reset/power-down input high through its onboard circuitry; an unconnected terminal is not a general instruction to leave the chip input floating. If using a different module, verify its reset circuit. Use 3.3 V power and logic. See the [NXP MFRC522 datasheet](https://www.nxp.com/docs/en/data-sheet/MFRC522.pdf) for electrical and reset details.
 
 ### OLED: I²C0
 
-| OLED | BPI pin | Signal |
+| OLED label | Physical pin | BPI signal |
 | --- | ---: | --- |
-| VCC | 1 | 3.3 V |
+| VCC | 1 | 3.3 V, for a compatible module |
 | GND | 9 | Ground |
-| SDA | 3 | PA12 |
-| SCL | 5 | PA11 |
+| SDA | 3 | PA12, I²C0 data |
+| SCL / SCK | 5 | PA11, I²C0 clock |
+| RES / RST | Not connected | No external reset wire was fitted |
+| DC | Not connected | Configured by the onboard I²C bridges |
+| CS | Not connected | Configured by the onboard I²C bridges |
 
-For the project's seven-pin SSD1309 PCB, configure I²C:
+For the project's 2.42-inch SSD1309 PCB, convert SPI to I²C as follows:
 
-| Location | Change |
+| PCB location | Modification |
 | --- | --- |
-| R8 | Remove the 0 Ω resistor |
-| R9 | Move the resistor here, or bridge the pads |
-| R10, R11, R12 | Bridge the pads |
+| R8 | Remove the 0 Ω resistor; leave these pads open |
+| R9 | Fit the removed resistor here, or solder-bridge the pads |
+| R10 | Solder-bridge the pads |
+| R11 | Solder-bridge the pads |
+| R12 | Solder-bridge the pads |
 
-These labels apply to the project's OLED PCB. R9 to R12 sit under the display's flex ribbon: release the connector's locking bar and slide the ribbon out to reach them, then refit it the same way round and close the bar. Check that no solder bridges neighbouring pads. The display uses address `0x3c`; no reset-wire modification is needed.
+These component labels apply to this particular OLED PCB, not every SSD1309 module. The converted display was detected at `0x3c` on `/dev/i2c-0`.
+
+**The OLED RES/RST connection was considered but never fitted. Leave it unconnected in this build; do not wire it to 3.3 V or a GPIO.** The illustrated build also leaves the separate RC522 RST terminal unconnected, as described above.
+
+Default device: `/dev/i2c-0`. Default address: `0x3c`. Confirm the module's controller, supply requirements, connector order, and address before connection; OLED modules do not all have the same pin order.
 
 ### Buzzer
 
-| Buzzer | BPI pin | Signal |
+| Connection | Physical pin | Setting |
 | --- | ---: | --- |
-| Positive / control | 7 | PA6 |
-| Ground | 6 | Ground |
+| Supported control input / driver input | 7 | PA6, `/dev/gpiochip0` line offset `6` on the supported image |
+| Ground | 6 | Common ground |
 
-### USB-C power breakout
+Use an active buzzer arrangement compatible with the GPIO, or a suitable transistor driver with the buzzer powered according to its rating. Do not use the GPIO as a general-purpose buzzer power supply. Set `BUZZER_OFFSET=none` to disable audible feedback.
 
-| Breakout | BPI pin | Signal |
+### USB-C power input
+
+| USB-C breakout label | Physical pin | BPI signal |
 | --- | ---: | --- |
-| VBUS | 2 | 5 V |
-| GND | 39 | Ground |
+| V / VBUS | 2 | 5 V input |
+| G / GND | 39 | Ground |
+| D+ and D− | Not connected | Data terminals unused |
 
-## Install
+The guide uses a **5 V, 2 A or greater USB-A charger and USB-A-to-USB-C cable**. The breakout supplies power only. Do not use a higher-voltage PD trigger. A USB-C-to-C supply requires a breakout with the appropriate CC pull-down resistors.
 
-This is a summary for experienced installers. The [Build and Install Guide (PDF)](Timeclock-Build-and-Install-Guide.pdf) walks through every step in detail, including finding the clock's IP address, copying the ZIP and creating the first manager.
+### Wiring checklist
 
-### 1. Write the image
+The illustrated build uses **14 jumper wires**: six RC522, four OLED, two buzzer, and two USB-C power wires. No Y-splice is fitted. OLED RES/DC/CS and RC522 IRQ/RST remain unconnected.
 
-Download the prepared [bpi-zero-wbuild 3.13 image](https://github.com/mkinderwater/bpi-zero-wbuild/releases/tag/3.13):
+Before applying power, check pin 2 goes only to USB-C V, RC522 power goes to pin 17, OLED power goes to pin 1, and buzzer red/positive goes to pin 7 with black/negative on pin 6. This direct buzzer wiring applies to the compatible buzzer used in the guide. Check every plug is fully seated on one pin, with no shorts or pinched wires.
 
-`bpi-zero-wbuild-3.13-trixie-minimal-hw-bpi-m2-zero.img.gz`
+### Verify interfaces
 
-Write it to the microSD card with balenaEtcher. On Windows, cancel any prompt to format the disk.
+Before installing:
 
-### 2. Set your credentials
+```bash
+ls -l /dev/spidev0.0 /dev/i2c-0 /dev/gpiochip0
+uname -m
+dpkg --print-architecture
+```
 
-Reinsert the card in your computer. Open `CONFIG.TXT` on the `BPIWBUILD` volume and enter your Wi-Fi and SSH credentials:
+Bus numbers and GPIO line offsets can differ on another image. Header position, Allwinner signal name, and Linux line offset are different identifiers.
+
+## Installation
+
+### 1. Prepare the clock
+
+Use the prepared [bpi-zero-wbuild 3.13 image](https://github.com/mkinderwater/bpi-zero-wbuild/releases/tag/3.13), `bpi-zero-wbuild-3.13-trixie-minimal-hw-bpi-m2-zero.img.gz`. Write it directly to a microSD card of at least 16 GB with balenaEtcher. Writing the image erases the selected card. Cancel any Windows prompt to format it afterward.
+
+Reinsert the card and open `CONFIG.TXT` on the `BPIWBUILD` volume. Set the six configuration lines using your own values:
 
 ```ini
 SSID=OfficeWiFi
-PSK=your-wifi-password
+PSK=wifi-password-here
 COUNTRY=CA
 HIDDEN=false
 TIMEZONE=America/Edmonton
-ROOT_PASSWORD=your-ssh-password
+ROOT_PASSWORD=Choose-A-Strong-Password-26
 ```
 
-Use your own values, with no spaces around `=` and no quotation marks. The network must be **2.4 GHz**. `ROOT_PASSWORD` is required, and the clock removes it from `CONFIG.TXT` after first boot, so record it somewhere safe.
+Use a 2.4 GHz Wi-Fi network. Follow the image's configuration notes for allowed values. Keep the root password safe; the image removes it from the configuration file after setup. Eject the card, insert it into the BPI, and apply power only after checking the wiring. Allow about ten minutes for first boot. The OLED remains blank until the timeclock software runs.
 
-**Insert the card into the Banana Pi before mounting the board in the case.** Once the Banana Pi is installed, the buzzer blocks the microSD slot.
-
-When assembly and wiring are complete, connect power. Allow about ten minutes for first boot; the OLED stays blank until the software is installed. Find the clock's IP address in your router and reserve it so it doesn't change.
-
-### 3. Upload and install
-
-[Download the latest mk-timeclock ZIP](https://github.com/mkinderwater/mk-timeclock/releases), then upload it to `/root` on the clock using WinSCP, SFTP or scp. Connect over SSH using the clock's IP address:
+Find the address in the router's device list and reserve it. Connect from Terminal or PowerShell:
 
 ```bash
 ssh root@192.168.1.50
+cat /etc/bpi-zero-wbuild-release
 ```
 
-Replace the example IP with your clock's address. Use the `ROOT_PASSWORD` entered in `CONFIG.TXT`.
+Replace the example IP with the clock's address. The image marker should identify `3.13-trixie-minimal-hw`. The SSH root password is separate from the manager account created later.
 
-Unzip the archive and run the installer:
+Copy `mk-timeclock-lite-RC5.16.zip` to `/root` using SFTP/WinSCP or `scp`, then run on the clock:
 
 ```bash
+sudo apt-get update
+sudo apt-get install -y unzip python3
 cd /root
-unzip mk-timeclock-lite-RC3-cleanup27.zip
-cd mk-timeclock-lite-RC3-cleanup27
-./install-master.sh
+unzip mk-timeclock-lite-RC5.16.zip
+cd mk-timeclock-lite-RC5.16
 ```
 
-Use the filename from your download. The installer handles dependencies, compilation and service setup; keep the clock powered until it finishes.
+These commands match the guide's cleanup6 source archive. If using a different release, use its actual archive and extracted directory names. The prepared image must expose the SPI, I²C, and GPIO devices listed above.
 
-### 4. Open the clock
+Run commands from the source directory. If an archive or download has lost executable permissions:
 
-Visit `https://<clock-ip>/setup` and create your manager account. A fresh install uses a self-signed certificate, so a browser warning is expected until you install a trusted one under **Settings**. Tap an unused card within 30 seconds to register it for manager authorization, then sign in at `https://<clock-ip>/login`.
+```bash
+chmod +x ./*.sh
+```
 
-Keep the manager authorization card separate from the manager's own attendance card.
+### 2. Check the source package
 
-Before closing the case, check that the display shows the time and **TAP YOUR CARD**, the manager card beeps and shows **HELLO MANAGER**, and an unregistered card shows **INVALID CARD**. Then fit the back with 4 × M3 × 12 mm countersunk screws.
+```bash
+python3 rc1-preflight.py
+```
 
-## Set up your business
+This checks that referenced installation files are present. It does not verify hardware or install dependencies.
 
-- Add employees, company Employee IDs and attendance cards.
-- Assign weekly or dated schedules.
-- Configure outgoing email and choose which notifications to send.
-- Set the pay schedule and the send times for payroll reports and timesheet links.
-- Add holidays and optional annual vacation allowances.
+### 3. Install the Primary
 
-Holiday CSV format:
+For the main clock that hosts the management application and attendance database:
+
+```bash
+sudo ./install-master.sh
+```
+
+The installer checks the platform, installs missing dependencies, builds the three programs on the clock, configures services, and creates initial HTTPS credentials.
+
+The Primary and Slave wrappers use the same shared installer. **Bare `sudo ./install.sh` does not install anything:** it requires a role argument. The explicit equivalents are `sudo ./install.sh --master` and `sudo ./install.sh --slave`.
+
+Do not run both role installers on one device. The installer refuses conflicting existing roles and refuses a Secondary installation over an existing Primary database.
+
+### 4. Open the management page
+
+Visit:
+
+```text
+https://<clock-ip>/setup
+```
+
+A fresh installation uses a temporary self-signed certificate, so the browser initially shows a certificate warning. Replace it with a trusted certificate under **Settings → HTTPS certificate** before distributing employee links.
+
+## First setup
+
+1. Create the first manager with first name, last name, position, email, and a password of at least 12 characters.
+2. Scan an unused RFID card at the clock to finish setup. Keep this card for manager authorization rather than attendance.
+3. Sign in at `https://<clock-ip>/login` using the manager's email address.
+4. Open **Time sync**, choose the local timezone, and confirm the clock is synchronized. The agent refuses attendance scans while the system clock is unsynchronized.
+5. Install the trusted HTTPS certificate and intermediate chain, if required. The hostname must match the certificate.
+6. Configure **Outgoing email**, including sender name/address and connection security. Queue a test and check **Email queue** for delivery status.
+7. Add employees, attendance cards, schedules, and vacation allowances.
+8. Set the pay frequency under **Pay periods**, then configure **Settings → Report delivery** and **Settings → Employee emails and links** day/time settings.
+9. Enter holidays manually or import a CSV, review the staged rows, and click **Save holidays**.
+10. Test a real IN/OUT pair, employee links, notifications, an export, and backup/restore before relying on the clock.
+
+Holiday import format:
 
 ```csv
 Date,Holiday
@@ -254,105 +316,281 @@ Date,Holiday
 2027-01-01,New Year's Day
 ```
 
-Use `YYYY-MM-DD` dates. Review imported rows and click **Save holidays**.
+Use `YYYY-MM-DD` dates and simple holiday names without commas. Import stages changes for review; selecting a file does not save them.
 
-## Daily use
+## Additional clocks
 
-Employees tap to clock IN and OUT. Managers use **Punches and corrections** to resolve missing punches, correct times and add notes.
+The **Primary** owns the authoritative attendance database and hosts manager administration. Each **Secondary** reads cards, maintains its local queue, and uploads attendance to the Primary.
 
-Late arrivals are checked against the scheduled start and grace. Early departures are checked after the scheduled finish plus grace, allowing for lunch and other returns.
-
-Employees request vacation through a private link. Managers approve requests or record earlier approvals, including verbal, emailed and historical vacation. Annual usage shows **X of Y days**. The allowance is a reference, not a limit.
-
-## Payroll
-
-Review and close the pay period, create an export, then send the report when needed. The Excel workbook has two tabs:
-
-- **Payroll Summary:** employee hours, vacation, sick days, stat holidays, other recorded leave and exceptions. Annual vacation shows days used against the allowance, such as **6 of 15 days**.
-- **Daily Detail:** dates, actual IN/OUT times, hours, attendance flags and notes. Leave and holidays have separate rows.
-
-Both tabs use the company’s Employee ID, or the clock’s internal ID if none is supplied. Daily Detail groups each employee’s records in a shaded block, with undated rows at the end. Click a Summary name to jump to their detail, or filter by employee or date.
-
-Late and early flags retain the actual times, hours and notes. Corrections and approval overrides show what the manager reviewed.
-
-Worked hours and leave days are separate. Summary hours add the rounded CSV shift hours; email totals use seconds and may differ slightly. An overnight shift belongs entirely to the pay period containing its local IN date.
-
-Changes after closing may require a new export. Saved revisions stay unchanged; emailed workbooks use the saved revision.
-
-### Sample payroll reports
-
-These previews use fictional employees for October 12–16, 2026. Click an image to view it full size.
-
-**Payroll Summary** shows totals, vacation used and allowed, and exceptions. Sarah’s late arrival and early departure appear alongside Robert’s manager correction and override.
-
-[![Sample Payroll Summary with attendance exceptions and vacation allowances](payroll-summary.png)](payroll-summary.png)
-
-**Daily Detail** shows the records behind those totals: Thanksgiving, David’s sick day, Elena’s approved vacation, Robert’s corrected OUT and Sarah’s attendance exceptions.
-
-[![Sample Daily Detail with shifts, leave, holidays and manager corrections](payroll-daily-detail.png)](payroll-daily-detail.png)
-
-**Exceptions in detail:** Sarah arrived 12 minutes late on October 13 and left 60 minutes early on October 16. Her actual times, hours and explanations remain beside each shift.
-
-[![Daily Detail showing Sarah’s late arrival and approved early departure](payroll-exceptions.png)](payroll-exceptions.png)
-
-## One workplace, multiple clocks
-
-Start with one clock. Add Secondary clocks at other entrances, workshops or buildings as needed. Each runs on its own hardware and connects to the same Primary.
-
-- **One set of records:** the Primary manages employees, cards, schedules, vacation and payroll. Secondary clocks collect punches; they do not maintain separate payroll records.
-- **Use any connected clock:** an employee can clock IN at one and OUT at another. The Primary combines their punches into the same attendance record.
-- **Keep recording during an outage:** each Secondary caches authorized cards and saves punches locally with their original timestamps. It uploads queued punches when the Primary is reachable again. Card changes take effect after the Secondary next refreshes its cache.
-- **Know where a punch came from:** records retain the source clock. Give clocks names such as Main entrance or Workshop.
-- **Keep management central:** review attendance, correct punches and export payroll from the Primary. If it is unavailable, Secondary clocks can queue punches, but management and reporting wait for it to return.
-
-The intended scale is a small business with one or several clock locations. Capacity depends on punch volume, report workload, network and Primary hardware. Employee and clock capacity have not been load-tested. The current management list displays up to **100 registered clocks**; this is a display limit, not a capacity rating.
-
-### Add a Secondary
-
-Install the same OS image and upload the source ZIP, then run:
+Install an Secondary clock with:
 
 ```bash
-./install-slave.sh
+sudo ./install-slave.sh
 ```
 
-Generate an adoption code on the Primary, enter it on the Secondary's setup page and approve the request on the Primary. Each Secondary needs network access to the Primary to register, refresh cards and upload punches.
+For an unadopted Secondary:
 
-## Backups and upgrades
+1. Install a trusted HTTPS certificate on the Primary.
+2. Generate an adoption code under the Primary's **Clock management** page.
+3. On a trusted local network, visit `http://<slave-ip>:8090/`.
+4. Enter the Primary's HTTPS address and the adoption code, then send the request.
+5. Approve the pending request on the Primary using its manager authorization workflow.
+6. Check approval on the Slave to complete adoption and start attendance recording.
 
-The Primary keeps the latest **30 local backups**, created daily around **02:15**. Manual backups count toward the same limit. Use **Backup and restore** to download or restore an archive.
+Keep device credentials private and unique. A Secondary is not an automatic failover Primary, and its queue is not a replica of the full payroll database. Backups are local to each clock; there is no backup synchronization between clocks.
 
-For an upgrade, upload and extract the new ZIP, then rerun `./install-master.sh` from its directory. Use `install-slave.sh` on a Secondary. Existing configuration and data are preserved.
+### Test and finish assembly
 
-## Documentation
+Before closing the case, confirm the display shows the date, time, and card prompt. Test the manager card for manager feedback and the unregistered kit card for rejection. If the clock reports **CLOCK NOT SYNCED**, resolve time synchronization before testing attendance.
 
-PDF manuals and templates:
+Unplug power, check that no wire is trapped, then fit the rear cover with four M3 × 12 mm countersunk screws. For wall mounting, use the guide's drilling template at **100% / Actual size** and verify its 80 mm reference with a ruler. Keep the clock away from large metal surfaces. Reconnect power and confirm the card prompt returns.
 
-- [Employee guide](Timeclock-Employee-Guide.pdf)
-- [Manager guide](Timeclock-Manager-Guide.pdf)
-- [Build and install guide](Timeclock-Build-and-Install-Guide.pdf)
-- [Wall mounting template](Timeclock-Wall-Mounting-Template.pdf)
+## Payroll and vacation reporting
 
-Technical documentation:
+A completed shift belongs entirely to the pay period containing its IN date in the clock’s local timezone. An OUT after midnight or after the period ends completes the original shift; hours are not split and no midnight punches are added. For example, September 15 at 22:00 through September 16 at 06:00 contributes all eight hours to September 1–15 and none to September 16–30. Elapsed duration uses the actual timestamps, including daylight-saving changes. A missing OUT remains an exception; the system does not invent an end time.
+
+### Recorded time and revisions
+
+IN/OUT pairs produce recorded elapsed hours. Schedule expectations, holiday context, and leave records do not manufacture worked hours. Managers resolve missing punches and review exceptions.
+
+Close a pay period before sending its payroll report. Late uploads and manager corrections can still affect closed periods; the manager interface identifies changes requiring another export. A new export creates a revision rather than overwriting the earlier CSV.
+
+Workbooks are generated from the selected saved CSV revision. A converter update can change workbook presentation, but saved source contents remain preserved. Email attachments use the saved revision, including when a revised send waits for an earlier queued email.
+
+### Workbook layout
+
+| Tab | Contents |
+| --- | --- |
+| Payroll Summary | One employee summary, worked hours, period leave counts, exceptions, annual vacation usage/allowance, Employee ID, and links into Daily Detail |
+| Daily Detail | Source records grouped by employee name and ID, then date and IN time; undated manager records finish that employee's block; alternating shading and AutoFilter |
+
+Daily Detail has no employee subtotal rows or blank separators. Totals remain on Payroll Summary.
+
+Summary hours add the CSV's rounded per-shift hours. Text email period totals use seconds and may differ slightly; the workbook states that distinction.
+
+### Vacation allowance
+
+An employee's annual allowance is optional. Blank means unspecified; zero is an explicit zero allowance. Allowance values support whole or half days.
+
+**X of Y days used** counts distinct approved vacation working dates in the selected calendar year, including future approved bookings. Holidays, pending/denied requests, and cancelled approvals are excluded. Overlapping approved dates count once. Counting follows the existing schedule calendar, with a weekday estimate where applicable.
+
+An employee can request more than the allowance, including when it is zero. There is no accrual, balance enforcement, or automatic request rejection based on the allowance.
+
+Saved payroll revisions retain the annual figures captured at export. The annual vacation CSV uses current settings, so it can change after schedule, holiday, allowance, or approval edits.
+
+### Annual vacation CSV
+
+The report starts with one summary row per employee: Employee ID, Employee, Annual allowance (days), Approved days, Remaining days. Employees with an allowance and no bookings remain visible. Blank allowance and balance mean unspecified, not zero. Negative balances show approved days above the allowance.
+
+Booking details follow: Employee ID, Employee, Start, End, Days, Remaining days, Manager note. Sort order is employee name, internal employee ID, vacation start date, then request ID. Each employee starts with their annual allowance; each row deducts its newly counted working dates. Overlapping dates are deducted once, with an explanatory note. Future approved bookings reduce the balance; pending, denied and cancelled requests do not. Cross-year bookings show only dates and days within the selected year. No-schedule estimates are marked in the note.
+
+The running balance follows vacation dates, not approval timestamps. It is recalculated using current approvals, allowance, schedules and holidays; it does not reconstruct the allowance or settings that existed when a booking was approved. Saved period exports remain unchanged. Approval audit details stay in the application rather than repeating in the annual CSV. This report is informational and does not enforce allowance limits.
+
+### Vacation workflow
+
+Employees use their private link to **Request vacation**: starting date, ending date, suggested return date and optional notes. One-day bookings default the end date to the start date. A blank return date uses the server suggestion. Working days are calculated automatically from current schedules and holidays. There is no leave-type selector or editable day total. The manager approves or denies the request on **Vacation**, and the existing email notifications report the request and decision.
+
+The manager Vacation page starts with **Waiting for approval**. **Vacation history** is split into **Upcoming** (including ongoing leave, earliest start first) and **Past** (most recent start first). Employee and year filters apply to history; waiting requests stay visible independently. Each list has 50-row pages, so older records beyond the previous 300-row cap remain accessible. Year filters include vacation overlapping the selected year.
+
+Managers click **Record vacation** to open a dialog for verbal/email approvals or vacation taken before installation. Select an employee, including an inactive employee if recording historical vacation, then enter dates and optional approval details. The end date defaults to the start date for one-day bookings. Return to work is suggested automatically; accept it as-is, change it, or leave it blank to use the same server suggestion. Past and future dates are accepted. The entry saves directly as Approved, identifies the manager and recording time, and sends no entry email.
+
+Approved vacation, including future bookings, counts toward **X of Y days used**. The allowance is informational and does not block entries. Overlapping pending or approved records are rejected. Cancel an incorrect approval and record a replacement; cancellation retains its existing notification rules. Existing saved revisions remain unchanged, and affected exports are flagged for a new revision.
+
+When vacation spans configured stat holidays, forms and request history show a breakdown such as **4 vacation days + 1 stat holiday**, with each holiday's name and date. Stats never count toward vacation usage. Employee timesheets show the stat once, with **Not counted as vacation**, rather than an additional vacation row. Payroll retains **Stat holiday (not vacation)**.
+
+Stat-only requests are rejected with the holiday date and name. Request history uses the current calendar but retains the originally requested day count; if it differs, the history explains that the calendar changed. Configured stat dates are listed separately even when they fall on an employee's non-working day. These are calendar records, not a calculation of holiday-pay entitlement. Changing holidays updates current counts and flags affected exports for revision without rewriting saved revisions.
+
+For sickness or another missed-attendance explanation, use **Attendance → Recorded absences**. New personal/unpaid/other leave requests are no longer accepted through the vacation form or API. Earlier non-vacation records remain in history and keep their original type. Existing links and internal route names remain valid.
+
+### Send times
+
+| Setting | Meaning of zero days | Time control |
+| --- | --- | --- |
+| Payroll report | On payday | Independent local send time |
+| Timesheet links | On the period-end day | Independent local send time |
+
+Use the day offsets to place both on a common processing date, then choose, for example, **08:00 for links** and **15:00 for payroll**. The report still requires closure before it can queue.
+
+### Daily attendance emails
+
+Under **Settings → Employee emails and links**, turn **Email a daily attendance snapshot** on or off and choose one local send time (default 19:00). The installation default is Off. Daily delivery is independent of the employee pay-period link-email switch.
+
+Each employee with recorded punches today receives one snapshot at or after that time: IN/OUT rows, completed recorded hours, known issues, an as-of timestamp and their read-only pay-period link. A running shift says **Still clocked in** and the total is incomplete. Missing punches are flagged; hours and OUT times are never invented. No punches means no daily email; existing missing-punch notices remain. Vacation-only and inactive employees are excluded.
+
+There are no daily schedule/leave checks, waiting for OUT or historical catch-up. Overnight intervals remain attached to their IN date. The snapshot is sent once for that date; its live period link shows later work and corrections. **Daily attendance summary** is editable under Settings → Email templates. Queue retries handle delivery failures without generating a second snapshot.
+
+### Employee timesheet links
+
+Employee HTTPS timesheets are read-only records of punches, recorded hours and leave. They say **Contact your manager if there is an issue.** There is no employee approval, acknowledgement, concern-submission button or approval deadline. Managers make audited corrections and review attendance under Pay periods. Later changes still show **Changed since review** to the manager.
+
+**Settings → Employee emails and links > When to send** sets the company rule:
+
+- **After the period ends:** send the set number of days after the period ends, at the configured local time.
+- **On each employee's last scheduled day:** send X whole hours before the final scheduled shift ends. The company-wide X defaults to 1; zero sends at finish. Holidays and approved time off are excluded when choosing the final shift.
+
+Employees use the company rule. Employees with no scheduled workday in the period and vacation-only records use after-period timing. A valid issued link can be viewed before, during or after a shift, including after period closure. **This period** shows the planned send date/time and queue status. Sending does not depend on an employee response.
+
+Times use the clock's local timezone. Missed automatic sends catch up and existing event identifiers prevent duplicate notices. Manual **Email link** and **Send report** remain immediate. Payroll receives attendance information; it makes the pay decisions separately.
+
+Copy link and Email link reuse the current valid URL. A newly queued period email extends expiry to at least 14 days; copying and duplicate email requests do not. Revoke it explicitly to issue a replacement. Both email paths use the single **Timesheet link** template.
+
+SMTP **None** is supported only across a trusted network or VPN. STARTTLS and SSL/TLS remain available. An email marked sent means the SMTP server accepted it, not that the recipient read it.
+
+## Backups and recovery
+
+Use **Backup and restore** for local backup creation, authorized downloads, and full-data restoration.
+
+- Primary installation enables a daily backup timer at **02:15 local time**, with up to five minutes of randomized delay.
+- Optional scheduled email sends the archive to a selected active manager. SMTP None, STARTTLS, and SSL/TLS use the shared outgoing-mail configuration.
+- Backup email is disabled by default and rejects archives above **15 MiB**. A mail failure does not invalidate the local archive.
+- Manager GUI download and restore actions require the applicable manager-card authorization. Restore also requires explicit confirmation.
+- A Secondary installation does not automatically enable the Primary's backup timer.
+
+Local commands:
+
+```bash
+sudo /opt/icubedev-timeclock/bin/timeclock-backup backup
+sudo /opt/icubedev-timeclock/bin/timeclock-backup list
+sudo /opt/icubedev-timeclock/bin/timeclock-backup verify /var/backups/timeclock/timeclock-EXAMPLE.tar.gz
+```
+
+Archives contain sensitive personnel, credential, and card data and are not encrypted at rest by this release. Protect stored copies and destination mailboxes. Back up before upgrades, and test restoration on a separate device before using it on a live clock.
+
+### Upgrade
+
+Extract the complete new source, run preflight, and rerun the installer for the device's **existing role**. Current RC3 upgrades preserve configuration and data; a database reset is not required. Arbitrary historical schema migrations are not supported.
+
+Uninstalling is not part of the normal upgrade procedure. `sudo ./uninstall.sh` removes program files and selected service/proxy configuration while preserving `/var/lib/timeclock` and `/etc/timeclock`. It is not a password reset or factory reset. Do not delete those directories to fix a login issue.
+
+## Configuration and services
+
+Hardware and device configuration is stored in `/etc/timeclock/timeclock.env`. The installer creates real credentials; [clock.env.example](clock.env.example) is a reference, not a file to copy over existing credentials.
+
+| Setting | Typical value |
+| --- | --- |
+| `TIMECLOCK_ROLE` | `primary` or `slave` |
+| `CLOCK_ID` | Unique clock identifier |
+| `SERVER_URL` | Primary: `http://127.0.0.1:8080`; Slave: trusted Primary HTTPS URL |
+| `DEVICE_KEY` | Unique private credential generated/provisioned for the clock |
+| `SPI_DEV` | `/dev/spidev0.0` |
+| `GPIOCHIP` | `/dev/gpiochip0` |
+| `BUZZER_OFFSET` | `6`, or `none` to disable |
+| `I2C_DEV` | `/dev/i2c-0` |
+| `I2C_ADDR` | `0x3c` |
+| `TTF_FONT` | `/usr/share/fonts/truetype/dejavu/DejaVuSansMono.ttf` |
+
+Attendance, schedules, email, reports, and most manager-facing settings are managed through the GUI. Copying an example environment file is not a substitute for configuring those settings.
+
+| Path | Purpose |
+| --- | --- |
+| `/opt/icubedev-timeclock/bin` | Installed programs and helpers |
+| `/var/lib/timeclock/server.db` | Primary database |
+| `/var/lib/timeclock/queue.db` | Local reader queue/cache |
+| `/etc/timeclock` | Device configuration and TLS material |
+| `/var/backups/timeclock` | Local backup archives |
+
+| Service / listener | Purpose |
+| --- | --- |
+| `timeclock-server.service` | Primary web backend, loopback port 8080 by default |
+| `timeclock-agent.service` | Reader, OLED, buzzer, and local queue |
+| `timeclock-mailer.service` | Primary email queue and payroll dispatch |
+| `nginx.service` | HTTPS entry point on port 443 |
+| `mk-timeclock-setup.service` | Temporary unadopted-Slave setup on port 8090 |
+| `timeclock-backup.timer` | Scheduled local backups |
+| `timeclock-attendance-reminders.timer` | Attendance reminder checks |
+| `timeclock-missing-digest.timer` | Missing-punch digest checks |
+
+Role determines which services run. Keep the loopback backend private and use trusted HTTPS for remote clocks and employee links.
+
+## Troubleshooting
+
+| Symptom | Check |
+| --- | --- |
+| Installer exits immediately | Use the Primary/Secondary wrapper; check image marker, architecture, and device nodes |
+| Cannot reach the GUI | Check the clock IP, nginx, and server service logs |
+| Login rejected after reinstall | Existing accounts/passwords are preserved; reinstalling does not reset them |
+| Card scans refused with time warning | Check NTP synchronization and network access; changing timezone does not synchronize the clock |
+| Reader fails verification | Check 3.3 V power, common ground, SPI wiring, and especially SDA/SS to pin 24; some clone revisions are deliberately rejected |
+| OLED blank | Check module pin order, 3.3 V compatibility, I²C address, and device node |
+| No buzzer | Check `BUZZER_OFFSET`, PA6 mapping, active-buzzer compatibility, and driver wiring |
+| Certificate works in browser but GUI says none | On affected older installs, restore TLS status-directory permissions as shown below; cleanup4 and later fix the installer |
+| Email remains pending | Check SMTP configuration, recipient, template, queue error, and mailer logs |
+| Annual vacation figures seem high | Future approved bookings count toward the selected year; the displayed allowance does not restrict requests |
+| Pay-period page times out | Measure with representative data on the Pi; the serial backend rebuilds historical reports and page requests have deadlines |
+
+Useful checks:
+
+```bash
+sudo systemctl status timeclock-server.service timeclock-agent.service timeclock-mailer.service nginx.service
+sudo journalctl -u timeclock-agent.service -n 50 --no-pager
+sudo journalctl -u timeclock-server.service -n 50 --no-pager
+sudo journalctl -u timeclock-mailer.service -n 50 --no-pager
+curl --max-time 5 http://127.0.0.1:8080/health
+timedatectl show -p NTPSynchronized
+```
+
+TLS status repair for an affected existing installation:
+
+```bash
+sudo chown root:timeclock /etc/timeclock/tls
+sudo chmod 0710 /etc/timeclock/tls
+```
+
+Refresh the certificate page afterward. This does not replace the installed certificate or expose the root-only private-key directories.
+
+A root-only local account utility is available at `/opt/icubedev-timeclock/bin/timeclock-add-manager.sh`. Run without arguments to create an initial manager when none exists, or use `--reset-password` followed by the manager's employee ID for password recovery. After local provisioning, register a manager card through the Manager cards page.
+
+## Development and verification
+
+The programs are C with SQLite, libcurl, libcrypt, Linux device interfaces, and FreeType. Supporting tools use Python 3 and shell. The XLSX converter uses Python's standard library.
+
+The target installer installs the build dependencies. With those dependencies available:
+
+```bash
+make all
+make lint
+python3 tests/run_current.py
+```
+
+After editing the stylesheet, regenerate the embedded UI with a new cache version:
+
+```bash
+make ui UI_VERSION=your-new-css-version
+```
+
+Browser checks require Playwright and Chromium. Set `PLAYWRIGHT_MODULE` and `CHROMIUM_PATH` to their installed locations, then run:
+
+```bash
+python3 tests/run_current.py --browser
+```
+
+The maintained suite is listed in `tests/current_suite.json`. Historical tests remain for coverage review and can carry obsolete assumptions; unrestricted test discovery is not the current acceptance contract.
+
+The current release validation is in `validation/RC5.16-suite.json`. Development checks do not establish physical RFID, OLED, buzzer, on-device performance, power-loss or installed restore acceptance. See [Testing](docs/TESTING.md) for device checks.
+
+Known limits include a serial web backend, report rebuilding on historical period lists, and UID-based cards that do not distinguish physical clones. Review payroll output and complete a device acceptance check before production use.
+
+## Further documentation
 
 - [Installation and roles](docs/INSTALLATION.md)
-- [Manager operations](docs/OPERATIONS.md)
+- [Manager operations, schedules, and email](docs/OPERATIONS.md)
 - [Attendance and payroll rules](docs/ATTENDANCE_PAYROLL.md)
 - [Backup and restore](docs/BACKUP_RESTORE.md)
-- [Development and testing](docs/TESTING.md)
+- [SQLite durability](docs/SQLITE_DURABILITY.md)
+- [Schema ownership](docs/SCHEMA.md)
+- [Testing and current limitations](docs/TESTING.md)
+- [Current cleanup and validation notes](CLEANUP_REPORT.md)
 
-## License
+Out-of-shift visits use the normal IN and OUT confirmations and sounds. An IN at or after the scheduled finish (or without a scheduled shift) and its paired OUT retain actual timestamps and hours without late-arrival or early-departure notices. Normal early arrivals and overnight schedules retain their existing handling. Update the Primary server; Secondary clock feedback is unchanged.
 
-mk-timeclock Lite is free software licensed under the **GNU Affero General Public License, version 3 (AGPL-3.0)**. See [LICENSE](LICENSE) for the full terms.
+Period emails extend their existing link to at least 14 days from queuing. Daily snapshots, copying and duplicate requests do not extend it. Preparation failures appear in Email queue and Overview, separately from SMTP delivery failures.
 
-Personal, internal business and commercial use are permitted. You may inspect, modify and redistribute the software under the license.
+Slave clocks publish independent health/backlog heartbeats. The Primary sends manager outage/recovery emails after three minutes without contact. See docs/SLAVE_OPERATIONS.md for the role-specific installed services, local backups and recovery limits. Update Primary and Slaves to RC5.16 together.
 
-When redistributing covered software, retain required notices and provide Corresponding Source as the license requires. If you modify the program and let users interact with it over a network, prominently offer those users the modified version's Corresponding Source at no charge.
+Slave clocks give a brief local chirp after three minutes without Primary communication, then every five minutes while disconnected. Swipe feedback takes priority. The idle screen shows OFFLINE and the saved-swipe count. SMTP and manager notification settings remain on Primary.
 
-Employee information, attendance records, payroll exports and backups do not become public merely because you use this software. Third-party components retain their own licenses.
+### Slave address and software version
 
-AGPL was chosen to keep the clock free software and make modified network versions' source available to their users. The software is supplied without warranty, to the extent permitted by law.
+Clock management shows each Slave's IP address and software version beside its status. The authenticated 30-second health heartbeat reports the local IPv4 or IPv6 address selected by the route to the configured Primary, plus the running agent build version. It is a reported local address, not the public NAT address, and need not be reachable from the manager's browser. Changes appear after the next successful heartbeat and GUI refresh (every 15 seconds, or Refresh).
 
-## Contributions
-
-Issues and contributions are welcome. Include the version, clock role and steps to reproduce a problem. Remove employee details, passwords, card IDs and private links from public reports.
-
+The Primary stores the last received values. Offline and revoked clocks retain them, with their existing contact/status indicators. Missing values display “Not reported”. An older agent does not supply these values; update both the Primary and Slaves to RC6.1. The Primary's own row does not receive Slave metadata. Address lookup and reporting run in the agent's network thread, independently of RFID input and OLED preview.

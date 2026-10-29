@@ -1,10 +1,8 @@
 # Current schema ownership
 
-The fresh Primary/server schema has **70 tables, 20 triggers, two views and seven explicit indexes**, unchanged from the accepted RC3 benchmark. SQLite's implicit indexes are not included in that count. The agent has its separate local queue/cache/rejection schema.
+The fresh Primary/server schema has **73 tables**. The agent has its separate local queue/cache/rejection schema. Audit/history records, authorization rows, configuration and queued operations have different lifecycles; source swipes, review/export revisions and audit histories remain retained.
 
-No whole table was proven obsolete in this pass. Reference counts are not deletion evidence: audit/history records, expiring authorization rows, configuration and queued operations have different lifecycles. All source swipes, review/export revisions and audit histories are retained.
-
-The current schema is declared directly. Schedule mode, signoff context, email tokens, time-off fields and agent cache mode no longer depend on older-schema ALTER branches. This is not a historical database migration. Reopening a current database preserves its records. Never use a reset to make an upgrade appear to work.
+The current schema is declared by its owning modules. Startup applies required current column additions/removals while preserving attendance records and exports. Never reset a database to make an update appear to work.
 
 Table definitions remain with their owning module. Signoff revision/delete history triggers have one definition in reconciliation. Email-token creation belongs to the server schema; the mailer retains its existing current-record token/identity repair behavior. Current attendance views are still rebuilt from their definitions at startup; this is distinct from a historical-schema upgrade.
 
@@ -64,6 +62,7 @@ Table definitions remain with their owning module. Signoff revision/delete histo
 | `rejected_uploads` | `src/server.c` |
 | `review_link_audit` | `src/server.c` |
 | `review_links` | `src/server.c` |
+| `daily_attendance_settings` | `src/server.c` (schema), `src/daily_attendance.inc` (settings/sender) |
 | `review_send_settings` | `src/server.c` |
 | `schedule_authorization` | `src/server.c` |
 | `schedule_change_audit` | `src/server.c` |
@@ -91,11 +90,19 @@ Table definitions remain with their owning module. Signoff revision/delete histo
 
 `attendance_absences_employee_day`, `attendance_events_employee`, `card_ownership_lookup`, `employee_active_lookup`, `swipes_employee_time`, `timeoff_employee_history`, `timeoff_pending`
 
-The full baseline/candidate comparison verified column order, types, defaults, keys, foreign keys, index SQL, view SQL and trigger SQL. Fresh initialization/restart, token creation, signoff update/delete audit history and queue constraints have executable coverage in `tests/test_cleanup_schema.py`.
+Current schema and restart behavior are covered by `tests/test_cleanup_schema.py` and `tests/test_rc58_cleanup.py`.
 
-Cleanup2 adds only `smtp_settings.sender_name TEXT NOT NULL DEFAULT ''` for the shared outgoing display name. A current RC3 database receives that field on startup, preserving its existing settings. No tables are added.
+RC5.8 removes `employees.review_timing` and the live `period_signoffs.unconfirmed` field. Existing nonzero confirmation flags are copied into `period_signoff_history` before the live column is removed. Historical signoff/audit tables remain; they are attendance evidence, not an active employee workflow.
 
-Cleanup3 adds `employees.vacation_days REAL` (nullable, 0 through 366 in half-day increments), and `send_time TEXT NOT NULL DEFAULT '00:00'` on payroll_settings and review_send_settings. Current RC3 receives these fields on startup. No annual balance, accrual, allocation, enforcement or dispatch table is added. Frozen annual usage/allowance travels in the existing immutable CSV snapshot records.
+`review_links.token` enables authenticated managers to reuse new links. Existing token hashes remain valid for employee access; a hash-only link requires explicit revocation before replacement. Bearer URLs also appear in the local email queue. Employee and period access remain manager-authenticated for link management and token-scoped read-only for employee views.
+
+The old reminder and override email templates are removed. Current template customizations and stored report revisions are preserved.
 
 
-Vacation workflow: no tables, columns, indexes or triggers added. Existing `timeoff_requests.kind` values are retained for historical records; new submissions accept only `vacation`. Manager-entered approvals use the existing request row and `timeoff_audit` action `recorded_approved`. No audit timestamp is backdated.
+RC5.11 simplifies `daily_attendance_settings` to `id`, `enabled` and `send_time`. Existing Off stays off; either old enabled daily mode maps to On. Removed daily catch-up fields are not retained. The old optional swipe receipt template is removed, while historical queue/audit evidence remains. No employee columns or new audit/dispatch tables are added.
+
+`email_preparation_failures` stores one latest preparation failure per delivery event, employee/context/reason/time, and latest resolution time/manager. Deliverable messages remain exclusively in `email_queue`.
+
+`clock_health` stores current per-clock heartbeat/backlog/recording state and the active outage episode. Email queue event keys deduplicate manager outage/recovery notices.
+
+RC6.1 adds `clock_health.ip_address` and `clock_health.software_version`, both non-null text defaulting to blank. Current-schema initialization adds these active fields to existing databases. Authenticated heartbeats validate and replace the values; clock removal clears the health row through the existing lifecycle. No extra table or settings are added.

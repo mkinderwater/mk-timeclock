@@ -18,3 +18,11 @@ Stat holidays remain visible during approved vacation even on an unscheduled wee
 Annual vacation reporting is informational. Payroll Summary shows calendar-year approved usage against the employee's configured annual allowance, including approved future bookings. These figures are frozen in annual reference records in the saved CSV. For a pay period crossing New Year, separate figures are shown for each year. Reference rows add no hours or period leave days. The source CSV still has the same columns; Daily Detail retains one row per source record and no totals.
 
 Older saved CSV revisions without annual reference records leave the new Summary column blank. They are not filled from live employee settings. Annual CSV is a live report: its summary counts each approved date once and includes employees with an explicit allowance even when usage is zero. It is not an immutable payroll revision.
+
+### Annual vacation CSV
+
+The report starts with one summary row per employee: Employee ID, Employee, Annual allowance (days), Approved days, Remaining days. Employees with an allowance and no bookings remain visible. Blank allowance and balance mean unspecified, not zero. Negative balances show approved days above the allowance.
+
+Booking details follow: Employee ID, Employee, Start, End, Days, Remaining days, Manager note. Sort order is employee name, internal employee ID, vacation start date, then request ID. Each employee starts with their annual allowance; each row deducts its newly counted working dates. Overlapping dates are deducted once, with an explanatory note. Future approved bookings reduce the balance; pending, denied and cancelled requests do not. Cross-year bookings show only dates and days within the selected year. No-schedule estimates are marked in the note.
+
+The running balance follows vacation dates, not approval timestamps. It is recalculated using current approvals, allowance, schedules and holidays; it does not reconstruct the allowance or settings that existed when a booking was approved. Saved period exports remain unchanged. Approval audit details stay in the application rather than repeating in the annual CSV. This report is informational and does not enforce allowance limits.

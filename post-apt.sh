@@ -1,14 +1,23 @@
 #!/usr/bin/env bash
 set -Eeuo pipefail
 [[ $EUID -eq 0 ]] || { echo 'Run as root.' >&2; exit 1; }
-echo '=== POST-APT: verify dependencies and nginx ==='
-packages=(nginx build-essential pkg-config libsqlite3-dev libcurl4-openssl-dev libfreetype-dev libi2c-dev fonts-dejavu-core ca-certificates curl sqlite3 python3 openssl)
+case "${1:-primary}" in
+  primary|slave) role=${1:-primary} ;;
+  *) echo 'Expected role: primary or slave' >&2; exit 2 ;;
+esac
+echo "=== POST-APT: verify $role dependencies ===" 
+packages=(util-linux build-essential pkg-config libsqlite3-dev libcurl4-openssl-dev libfreetype-dev libi2c-dev fonts-dejavu-core ca-certificates curl sqlite3 python3 openssl)
+[[ "$role" != primary ]] || packages+=(nginx)
 for package in "${packages[@]}"; do
   dpkg-query -W -f='${Status}' "$package" 2>/dev/null | grep -qx 'install ok installed' || {
     echo "Required package unavailable: $package" >&2; exit 1;
   }
 done
 pkg-config --exists freetype2 || { echo 'FreeType pkg-config check failed' >&2; exit 1; }
+if [[ "$role" == slave ]]; then
+  echo 'Slave dependencies: OK'
+  exit 0
+fi
 # Explicitly test with an isolated config: the production site may not exist yet.
 nginx_conf=$(mktemp)
 nginx_err=$(mktemp)

@@ -24,12 +24,15 @@ if [[ "$ROLE" == slave && -e /var/lib/timeclock/server.db ]]; then
 fi
 
 # Verify packaged dependencies before touching installed services or binaries.
-for required in timeclock-backup timeclock-payroll-xlsx.py timeclock-attendance-reminders.py timeclock-missing-digest.py clock-setup.py timeclock-system-action.sh; do
+required_sources=(src/ui.css timeclock-backup clock-setup.py timeclock-system-action.sh timeclock-slave-backup.service timeclock-slave-backup.timer)
+if [[ "$ROLE" == primary ]]; then required_sources+=(timeclock-payroll-xlsx.py timeclock-attendance-reminders.py timeclock-missing-digest.py); fi
+for required in "${required_sources[@]}"; do
   [[ -f "$HERE/$required" ]] || { echo "Required installation source missing: $required" >&2; exit 1; }
 done
 "$HERE/pre-apt.sh"
 export DEBIAN_FRONTEND=noninteractive
-required_packages=(nginx build-essential pkg-config libsqlite3-dev libcurl4-openssl-dev libfreetype-dev libi2c-dev fonts-dejavu-core ca-certificates curl sqlite3 python3 openssl)
+required_packages=(util-linux build-essential pkg-config libsqlite3-dev libcurl4-openssl-dev libfreetype-dev libi2c-dev fonts-dejavu-core ca-certificates curl sqlite3 python3 openssl)
+[[ "$ROLE" == primary ]] && required_packages+=(nginx)
 missing_packages=()
 for package in "${required_packages[@]}"; do
   if ! dpkg-query -W -f='${Status}' "$package" 2>/dev/null | grep -qx 'install ok installed'; then
@@ -55,43 +58,81 @@ if [[ $have_time_daemon -eq 0 ]]; then
   apt-get install -y --no-install-recommends systemd-timesyncd
   systemctl enable --now systemd-timesyncd.service || true
 fi
-"$HERE/post-apt.sh"
-make -C "$HERE" clean all
+"$HERE/post-apt.sh" "$ROLE"
+if [[ "$ROLE" == primary ]]; then make -C "$HERE" clean all; else make -C "$HERE" timeclock-agent; fi
 id timeclock >/dev/null 2>&1 || useradd --system --home /var/lib/timeclock --shell /usr/sbin/nologin timeclock
 install -d -m 0750 -o timeclock -g timeclock /var/lib/timeclock
 install -d -m 0755 /opt/icubedev-timeclock/bin
+# Do not race a backup/restore or replace its executable while it is active.
+install -d -m 0750 -o root -g timeclock /var/backups/timeclock
+exec 9>/var/backups/timeclock/.operation.lock
+flock -n 9 || { echo 'Backup or restore is active. Retry installation when it finishes.' >&2; exit 1; }
+# Stop existing applications before replacing any executable.
+systemctl disable --now timeclock-agent.service timeclock-server.service timeclock-mailer.service timeclock-backup.timer timeclock-attendance-reminders.timer timeclock-missing-digest.timer mk-timeclock-setup.service >/dev/null 2>&1 || true
+install -m 0644 "$HERE/src/ui.css" /opt/icubedev-timeclock/bin/ui.css
 install -m 0755 "$HERE/clock-setup.py" /opt/icubedev-timeclock/bin/clock-setup.py
 install -m 0644 "$HERE/mk-timeclock-setup.service" /etc/systemd/system/mk-timeclock-setup.service
 install -m 0755 "$HERE/timeclock-agent" /opt/icubedev-timeclock/bin/
+if [[ "$ROLE" == primary ]]; then
 install -m 0755 "$HERE/timeclock-server" /opt/icubedev-timeclock/bin/
+fi
 
+if [[ "$ROLE" == primary ]]; then
 install -m 0755 "$HERE/timeclock-mailer" /opt/icubedev-timeclock/bin/
+fi
+if [[ "$ROLE" == primary ]]; then
 install -m 0755 "$HERE/timeclock-payroll-xlsx.py" /opt/icubedev-timeclock/bin/
+fi
+if [[ "$ROLE" == primary ]]; then
 install -m 0755 "$HERE/timeclock-attendance-reminders.py" "$HERE/timeclock-missing-digest.py" /opt/icubedev-timeclock/bin/
+fi
+if [[ "$ROLE" == primary ]]; then
 install -m 0644 "$HERE/timeclock-attendance-reminders.service" /etc/systemd/system/
+fi
+if [[ "$ROLE" == primary ]]; then
 install -m 0644 "$HERE/timeclock-attendance-reminders.timer" "$HERE/timeclock-missing-digest.timer" "$HERE/timeclock-missing-digest.service" /etc/systemd/system/
+fi
+if [[ "$ROLE" == primary ]]; then
 install -m 0755 "$HERE/run-mailer.sh" /opt/icubedev-timeclock/bin/
+fi
 install -m 0755 "$HERE/run-agent.sh" /opt/icubedev-timeclock/bin/
+if [[ "$ROLE" == primary ]]; then
 install -m 0755 "$HERE/run-server.sh" /opt/icubedev-timeclock/bin/
+fi
 install -m 0755 "$HERE/check-config.sh" /opt/icubedev-timeclock/bin/
 install -m 0755 "$HERE/timeclock-ntp-apply.sh" "$HERE/timeclock-timezone-apply.sh" /opt/icubedev-timeclock/bin/
 install -m 0755 "$HERE/timeclock-system-action.sh" /opt/icubedev-timeclock/bin/
 # The manager-authorized backup action invokes this executable.
 [[ -f "$HERE/timeclock-backup" ]] || { echo "Required backup helper missing" >&2; exit 1; }
 install -m 0755 "$HERE/timeclock-backup" /opt/icubedev-timeclock/bin/timeclock-backup
+if [[ "$ROLE" == primary ]]; then
 install -m 0755 "$HERE/timeclock-backup-upload.py" /opt/icubedev-timeclock/bin/timeclock-backup-upload.py
+fi
 install -d -m 0700 -o timeclock -g timeclock /var/lib/timeclock/backup-inbox
+if [[ "$ROLE" == primary ]]; then
 install -m 0644 "$HERE/timeclock-backup-upload.service" "$HERE/timeclock-backup-upload.path" /etc/systemd/system/
+fi
 
 # Backup exports remain root owned, readable only by the timeclock server group.
 install -d -m 0750 -o root -g timeclock /var/backups/timeclock
-find /var/backups/timeclock -maxdepth 1 -type f \( -name "timeclock-*.tar.gz" -o -name "timeclock-*.tar.gz.sha256" \) -exec chown root:timeclock {} + -exec chmod 0640 {} +
+backup_mode=0640; [[ "$ROLE" != slave ]] || backup_mode=0600
+find /var/backups/timeclock -maxdepth 1 -type f \( -name "timeclock-*.tar.gz" -o -name "timeclock-*.tar.gz.sha256" \) -exec chown root:timeclock {} + -exec chmod "$backup_mode" {} +
+if [[ "$ROLE" == primary ]]; then
 install -m 0755 "$HERE/timeclock-tls-apply.sh" /opt/icubedev-timeclock/bin/
+fi
+if [[ "$ROLE" == primary ]]; then
 install -m 0755 "$HERE/timeclock-tls-bootstrap.sh" /opt/icubedev-timeclock/bin/
+fi
 install -m 0644 "$HERE/tc-env.sh" /opt/icubedev-timeclock/bin/
+if [[ "$ROLE" == primary ]]; then
 install -m 0750 "$HERE/timeclock-add-manager.sh" /opt/icubedev-timeclock/bin/
+fi
+if [[ "$ROLE" == primary ]]; then
 install -m 0750 "$HERE/timeclock-register-primary.sh" /opt/icubedev-timeclock/bin/
+fi
+if [[ "$ROLE" == primary ]]; then
 install -m 0750 "$HERE/timeclock-primary-manager-status.sh" /opt/icubedev-timeclock/bin/
+fi
 install -d -m 0750 -o root -g timeclock /etc/timeclock
 # Existing certificates may predate the readable status marker fix.
 if [[ -d /etc/timeclock/tls ]]; then
@@ -131,20 +172,43 @@ else
 fi
 chown root:timeclock /etc/timeclock/timeclock.env
 chmod 0640 /etc/timeclock/timeclock.env
+if [[ "$ROLE" == primary ]]; then
 install -m 0644 "$HERE/timeclock-backup.service" /etc/systemd/system/
+else
+install -m 0644 "$HERE/timeclock-slave-backup.service" /etc/systemd/system/timeclock-backup.service
+# Retire only timeclock-owned Primary services from earlier Slave installs.
+systemctl disable --now timeclock-tls-apply.path timeclock-backup-upload.path >/dev/null 2>&1 || true
+for unit in timeclock-server.service timeclock-mailer.service timeclock-attendance-reminders.service timeclock-attendance-reminders.timer timeclock-missing-digest.service timeclock-missing-digest.timer timeclock-tls-apply.path timeclock-tls-apply.service timeclock-backup-upload.path timeclock-backup-upload.service; do rm -f "/etc/systemd/system/$unit"; done
+for binary in timeclock-server timeclock-mailer run-server.sh run-mailer.sh timeclock-payroll-xlsx.py timeclock-attendance-reminders.py timeclock-missing-digest.py timeclock-tls-apply.sh timeclock-tls-bootstrap.sh timeclock-backup-upload.py timeclock-add-manager.sh timeclock-register-primary.sh timeclock-primary-manager-status.sh; do rm -f "/opt/icubedev-timeclock/bin/$binary"; done
+rm -f /etc/nginx/conf.d/timeclock-tls.conf /etc/nginx/conf.d/timeclock-http-redirect.conf
+if command -v nginx >/dev/null && systemctl is-active --quiet nginx.service; then nginx -t && systemctl reload nginx.service; fi
+fi
+if [[ "$ROLE" == primary ]]; then
 install -m 0644 "$HERE/timeclock-backup.timer" /etc/systemd/system/
+else
+install -m 0644 "$HERE/timeclock-slave-backup.timer" /etc/systemd/system/timeclock-backup.timer
+fi
+if [[ "$ROLE" == primary ]]; then
 install -m 0644 "$HERE/timeclock-server.service" /etc/systemd/system/
+fi
 install -m 0644 "$HERE/timeclock-agent.service" /etc/systemd/system/
+if [[ "$ROLE" == primary ]]; then
 install -m 0644 "$HERE/timeclock-mailer.service" /etc/systemd/system/
+fi
 install -m 0644 "$HERE/timeclock-ntp-apply.service" /etc/systemd/system/
 install -m 0644 "$HERE/timeclock-ntp-apply.path" "$HERE/timeclock-timezone-apply.path" "$HERE/timeclock-timezone-apply.service" /etc/systemd/system/
 install -m 0644 "$HERE/timeclock-system-action.service" /etc/systemd/system/
 install -m 0644 "$HERE/timeclock-system-action.path" /etc/systemd/system/
+if [[ "$ROLE" == primary ]]; then
 install -m 0644 "$HERE/timeclock-tls-apply.service" /etc/systemd/system/
+fi
+if [[ "$ROLE" == primary ]]; then
 install -m 0644 "$HERE/timeclock-tls-apply.path" /etc/systemd/system/
+fi
 
 systemctl disable --now timeclock-missing-in.timer >/dev/null 2>&1 || true
 systemctl daemon-reload
+if [[ "$ROLE" == primary ]]; then
 # New installations begin with a temporary self-signed HTTPS certificate.
 # Upgrades preserve existing HTTPS credentials unchanged.
 /opt/icubedev-timeclock/bin/timeclock-tls-bootstrap.sh
@@ -177,6 +241,7 @@ nginx -t >/dev/null || exit 1
 systemctl reload-or-restart nginx.service
 # Redirect all ordinary HTTP requests to the existing HTTPS listener.
 "$HERE/timeclock-http-redirect.sh"
+fi
 # Role-specific startup occurs once dependencies and units are installed.
 # Keep all application services stopped during installation.
 systemctl disable --now timeclock-agent.service timeclock-server.service timeclock-mailer.service timeclock-backup.timer timeclock-attendance-reminders.timer timeclock-missing-digest.timer mk-timeclock-setup.service >/dev/null 2>&1 || true
@@ -186,9 +251,9 @@ systemctl enable --now timeclock-timezone-apply.path
 install -d -m 0700 -o timeclock -g timeclock /var/lib/timeclock/tls-stage
 # Keep status markers visible to the backend on upgrades; versions/keys stay root-only.
 install -d -m 0710 -o root -g timeclock /etc/timeclock/tls
-systemctl enable --now timeclock-tls-apply.path
+[[ "$ROLE" != primary ]] || systemctl enable --now timeclock-tls-apply.path
 systemctl enable --now timeclock-system-action.path
-systemctl enable --now timeclock-backup-upload.path
+[[ "$ROLE" != primary ]] || systemctl enable --now timeclock-backup-upload.path
 # Existing configuration may predate ATTENDANCE_ENABLED; absent means disabled.
 if grep -q '^BUZZER_OFFSET=CHANGE_ME$' /etc/timeclock/timeclock.env; then
   sed -i 's/^BUZZER_OFFSET=CHANGE_ME$/BUZZER_OFFSET=none/' /etc/timeclock/timeclock.env
@@ -204,6 +269,8 @@ else
 fi
 chown root:timeclock "$ENV"; chmod 0640 "$ENV"
 
+# All installed files/configuration are now stable; allow a persistent timer to back up.
+flock -u 9
 if [[ "$ROLE" == primary ]]; then
   # Server creates schema; registration must succeed before agent starts.
   systemctl enable --now timeclock-server.service
@@ -219,6 +286,7 @@ else
   # No server, mailer, reminders, or backup timer on unadopted Slave.
   if [[ -f /etc/timeclock/adopted ]]; then
     systemctl enable --now timeclock-agent.service
+    systemctl enable --now timeclock-backup.timer
     echo 'Adopted Slave installed; local RFID agent started.'
   else
     systemctl enable --now mk-timeclock-setup.service
