@@ -8,7 +8,14 @@ rm -f "$request"
 case "$action" in
  reboot) systemctl reboot ;;
  shutdown) systemctl poweroff ;;
- restart) systemctl try-restart timeclock-agent.service timeclock-mailer.service timeclock-server.service ;;
+ restart)
+   source /opt/icubedev-timeclock/bin/tc-env.sh
+   if [[ $(tc_val /etc/timeclock/timeclock.env TIMECLOCK_ROLE) == slave ]]; then
+     systemctl try-restart timeclock-agent.service
+   else
+     systemctl try-restart timeclock-agent.service timeclock-mailer.service timeclock-server.service
+   fi
+   ;;
  backup) /opt/icubedev-timeclock/bin/timeclock-backup backup ;;
  restore:*)
    filename=${action#restore:}

@@ -70,7 +70,7 @@ def worked_hours(row):
         raise ValueError('Invalid worked hours')
     return hours
 
-def make(raw, target, start, end):
+def make(raw, target, start, end, preview=False):
     # Historical vacation is email context, not a record for this pay period.
     # Filter during rendering so saved CSV revisions remain untouched.
     data=[r for r in csv.DictReader(io.StringIO(raw))
@@ -99,13 +99,13 @@ def make(raw, target, start, end):
         return 'attendance' if low.startswith('complete') else 'other'
 
     summary=[[item('Payroll Summary',1)],
-             [item('Pay period',2),item(f'{start} to {end}')],
-             [item('Recorded hours and leave days; payroll determines compensation. Hours sum rounded CSV shifts; email period totals use seconds and may differ slightly.')],
+             [item('Attendance period',2),item(f'{start} to {end}')],
+             [item('PREVIEW, not a saved revision' if preview else 'Recorded hours and leave days; payroll determines compensation. Hours sum rounded CSV shifts; email period totals use seconds and may differ slightly.')],
              [item('Employee',2),item('Worked hours',2),item('Vacation days',2),
               item('Sick days',2),item('Stat holidays',2),item('Other absence / leave days',2),item('Exceptions / notes',2),item('Annual vacation (used / allowed)',2),item('Employee ID',2)]]
     detail=[[item('Daily Detail',1)],
-            [item('Pay period',2),item(f'{start} to {end}')],
-            [item('Complete attendance and recorded leave; no automatic pay calculations.')],
+            [item('Attendance period',2),item(f'{start} to {end}')],
+            [item('PREVIEW, not a saved revision' if preview else 'Complete attendance and recorded leave; no automatic pay calculations.')],
             [item('Date',2),item('Employee',2),item('IN',2),item('OUT',2),
              item('Worked hours',2),item('Type / status',2),item('Notes / corrections',2),item('Employee ID',2)]]
     employees=sorted(groups.items(),key=lambda row:(row[0][0].casefold(),row[0][1]))
@@ -121,7 +121,7 @@ def make(raw, target, start, end):
             elif kind=='sick':sick+=1
             elif kind=='stat':stat+=1
             elif kind=='other' and (status.lower().startswith(('recorded absence:','approved '))):other+=1
-            if note or any(t in status.casefold() for t in ('late arrival','check','missing','unconfirmed','manager override','without employee confirmation')):
+            if note or any(t in status.casefold() for t in ('late arrival','check','missing','unconfirmed','manager override','without employee confirmation','clocked in, no out yet','long shift')):
                 marker=': '.join(x.strip() for x in (status,note) if x.strip())
                 if marker and marker not in exceptions:exceptions.append(marker)
         summary.append([item(person,9),item(hours,4,True),
@@ -190,6 +190,7 @@ def make(raw, target, start, end):
         for i,(_,content) in enumerate(sheets,1):fixed_write(f'xl/worksheets/sheet{i}.xml',content)
 
 if __name__=='__main__':
-    if len(sys.argv)!=5:sys.exit('usage: xlsx.py input.csv output.xlsx start-date end-date')
+    if len(sys.argv) not in (5,6):sys.exit('usage: xlsx.py input.csv output.xlsx start-date end-date [--preview]')
+    if len(sys.argv)==6 and sys.argv[5]!='--preview':sys.exit('unknown option')
     with open(sys.argv[1],encoding='utf-8-sig',errors='replace',newline='') as f: source=f.read()
-    make(source,sys.argv[2],sys.argv[3],sys.argv[4])
+    make(source,sys.argv[2],sys.argv[3],sys.argv[4],preview=len(sys.argv)==6)

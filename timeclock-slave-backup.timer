@@ -1,0 +1,9 @@
+[Unit]
+Description=mk-timeclock Local Slave Backup Timer
+[Timer]
+OnCalendar=*-*-* 02:15:00
+Persistent=false
+RandomizedDelaySec=300
+Unit=timeclock-backup.service
+[Install]
+WantedBy=timers.target

@@ -8,40 +8,11 @@ and the CSS that highlights the current page, so a page cannot be in one and not
 A page uses its key in UI_HEAD("Title","key"); tests fail if a key is not listed here.
 """
 import re
+import json
 import sys
 
-# Every top-level entry is a dropdown: (group label, [(key, href, label), ...]).
-NAV = [
-    ('Today', [('dashboard', '/', 'Overview'),
-               ('presence', '/presence', 'Who is in'),
-               ('unknown', '/rejected-cards', 'Unknown cards')]),
-    ('Timesheets', [('corrections', '/punch-corrections', 'Punches and corrections'),
-                    ('periods', '/pay-periods', 'Pay periods'),
-                    ('review-links', '/review-links', 'Timesheet links'),
-                    ('time-off', '/time-off-requests', 'Vacation'),
-                    ('export', '/attendance-export', 'Attendance export')]),
-    ('People', [('employees', '/employees', 'Employees'),
-                ('cards', '/card-status', 'Card status'),
-                ('manager-cards', '/manager-cards', 'Manager cards'),
-                ('accounts', '/accounts', 'Manager accounts'),
-                ('schedules', '/schedules', 'Schedules')]),
-    ('Settings', [('payroll', '/payroll', 'Payroll report'),
-                  ('holidays', '/holidays', 'Stat holidays'),
-                  ('clock-grace', '/clock-grace', 'Late grace and repeat taps'),
-                  ('display', '/display', 'Clock display'),
-                  ('templates', '/email-templates', 'Email templates'),
-                  ('smtp', '/smtp', 'Outgoing email'),
-                  ('queue', '/email-queue', 'Email queue'),
-                  ('ntp', '/ntp', 'Time sync'),
-                  ('tls', '/tls', 'HTTPS certificate')]),
-    ('Device', [('health', '/device-health', 'System health'),
-                ('backups', '/backups', 'Backup and restore'),
-                ('uploads', '/rejected-uploads', 'Rejected uploads'),
-                ('diagnostics', '/diagnostics', 'Diagnostics'),
-                ('audit', '/audit', 'Audit log'),
-                ('clocks', '/clocks', 'Clock management'),
-                ('system', '/system', 'System operations')]),
-]
+# One page catalog: Work renders as direct links; utility groups render in Settings.
+NAV = [('Work', [('dashboard', '/', 'Overview'), ('corrections', '/punch-corrections', 'Attendance'), ('employees', '/employees', 'Employees'), ('periods', '/pay-periods', 'Pay periods'), ('time-off', '/time-off-requests', 'Vacation')]), ('Company', [('settings', '/settings', 'Settings'), ('period-schedule', '/pay-periods#periodSettings', 'Attendance period schedule'), ('schedules', '/schedules', 'Bulk schedules'), ('payroll', '/payroll', 'Report delivery'), ('holidays', '/holidays', 'Stat holidays'), ('review-links', '/review-links', 'Employee emails and links'), ('accounts', '/accounts', 'Manager accounts'), ('manager-cards', '/manager-cards', 'Manager cards')]), ('Email', [('templates', '/email-templates', 'Email templates'), ('smtp', '/smtp', 'Outgoing email'), ('queue', '/email-queue', 'Email queue')]), ('Clock', [('clock-grace', '/clock-grace', 'Late grace and repeat taps'), ('display', '/display', 'Clock display'), ('ntp', '/ntp', 'Time sync'), ('tls', '/tls', 'HTTPS certificate'), ('health', '/device-health', 'System health'), ('backups', '/backups', 'Backup and restore'), ('clocks', '/clocks', 'Clock management'), ('system', '/system', 'System operations')]), ('Audit', [('unknown', '/rejected-cards', 'Unknown cards'), ('uploads', '/rejected-uploads', 'Rejected uploads'), ('export', '/attendance-export', 'Raw swipe export'), ('diagnostics', '/diagnostics', 'Diagnostics'), ('audit', '/audit', 'Audit log')])]
 
 
 def links():
@@ -52,45 +23,24 @@ def links():
 
 
 def nav_markup():
-    parts = []
-    for group, items in NAV:
-        inner = ''.join(f"<a href='{h}' data-key='{k}'>{l}</a>" for k, h, l in items)
-        parts.append(f"<details class='g-{group.lower()}'><summary>{group}</summary><div>{inner}</div></details>")
-    return ''.join(parts)
+    items = NAV[0][1] + [('settings', '/settings', 'Settings')]
+    return ''.join(f"<a href='{h}' data-key='{k}'>{l}</a>" for k,h,l in items)
 
 
 def active_selectors():
-    sels = []
-    for key, href, _, group in links():
-        sels.append(f"body[data-page={key}] .nav a[href='{href}']")
-        sels.append(f"body[data-page={key}] .nav .g-{group.lower()}>summary")
-    return sels
+    return [f"body[data-page={key}] .nav a[href='{href if group == 'Work' else '/settings'}']" for key,href,_,group in links()]
 
 
-# Menu behaviour that <details> lacks on its own: one dropdown open at a time, close on an
-# outside click or Escape (focus returns to the menu button), and aria-current on the current
-# page link. Single quotes only: the script is embedded in a C string.
-NAV_JS = ("<script>(function(){var n=document.querySelector('.nav');if(!n)return;"
-          "var ds=Array.prototype.slice.call(n.querySelectorAll('details'));"
-          "function shut(keep){ds.forEach(function(d){if(d!==keep)d.open=false;});}"
-          "ds.forEach(function(d){d.addEventListener('toggle',function(){if(d.open)shut(d);});});"
-          "document.addEventListener('click',function(e){if(!n.contains(e.target))shut(null);});"
-          "document.addEventListener('keydown',function(e){if(e.key!=='Escape')return;"
-          "var o=ds.filter(function(d){return d.open;})[0];if(o){o.open=false;o.querySelector('summary').focus();}});"
-          "var k=document.body.getAttribute('data-page');"
-          "var a=k&&n.querySelector('a[data-key='+k+']');if(a)a.setAttribute('aria-current','page');"
-          # Issue counts: a red number on each page link that needs attention and on its menu group.
-          "function count(el,v,t){var c=document.createElement('span');c.className='count';c.textContent=v;c.title=t;"
-          "c.setAttribute('aria-label',t);el.append(c);}"
-          "function refreshIssues(){n.querySelectorAll('.count').forEach(function(x){x.remove();});"
-          "tc.request('/api/v1/admin/issues',{cache:'no-store'}).then(function(r){return r.ok?r.json():null;}).then(function(j){"
-          "if(!j||!j.items)return;var sum=new Map();j.items.forEach(function(it){if(!it.count)return;"
-          "var l=n.querySelector('a[data-key='+it.key+']');if(!l)return;count(l,it.count,it.text);"
-          "var d=l.closest('details');sum.set(d,(sum.get(d)||0)+it.count);});"
-          "sum.forEach(function(v,d){count(d.querySelector('summary'),v,v+(v===1?' item needs':' items need')+' attention');});"
-          "}).catch(function(){});}"
-          "refreshIssues();window.addEventListener('timeclock:issues-changed',refreshIssues);"
-          "})();</script>")
+# Page catalog also powers contextual issue links and the Settings hub.
+PAGE_MAP = {k: {'href':h, 'label':label, 'group':group} for k,h,label,group in links()}
+# Menu behaviour, part of /ui.js. UI_NAV calls tc.nav() right after the menu markup.
+NAV_JS = ("function nav(){var n=document.querySelector('.nav');if(!n)return;"
+          "var key=document.body.dataset.page,link=n.querySelector('a[data-key='+key+']')||n.querySelector('a[data-key=settings]');"
+          "if(link)link.setAttribute('aria-current','page');"
+          "function refresh(force){issues(force).then(function(j){n.querySelectorAll('.count').forEach(function(x){x.remove();});var counts=new Map();"
+          "(j.items||[]).forEach(function(it){if(!it.count)return;var a=n.querySelector('a[data-key='+it.key+']')||n.querySelector('a[data-key=settings]');counts.set(a,(counts.get(a)||0)+it.count);});"
+          "counts.forEach(function(count,a){if(!a)return;var b=document.createElement('span');b.className='count';b.textContent=count;b.setAttribute('aria-label',count+' items need attention');a.append(b);});"
+          "}).catch(function(){});}refresh();window.addEventListener('timeclock:issues-changed',function(){refresh(true);});}")
 
 # Shared page helpers, loaded on every page (manager and public) before the page script.
 #   tc.err(el,e) / tc.ok(el,text): status line in red Error or green Done style; any later text change clears it.
@@ -98,8 +48,22 @@ NAV_JS = ("<script>(function(){var n=document.querySelector('.nav');if(!n)return
 #   tc.banner(el,level,label,text): page-level issue banner; empty text hides it.
 #   tc.ago(seconds): 45s, 12m, 5h, 3d.
 #   tc.health(key,value): [level,label] when a System health reading needs attention, else null.
+#   tc.hm(minutes): 8:02 AM from minutes after local midnight (wraps past midnight).
+#   tc.strip({from,to,label,marks:[{s,e,c,t}]}): a shift strip. c is sched, work, open, long, late, due,
+#     miss or now; s/e are minutes after local midnight, clipped to from..to; t is the hover text.
+#   tc.range(minutes,lo,hi): [from,to] covering the minutes and lo..hi, snapped to the ruler step.
+#   tc.axis(from,to): the hour ruler drawn above a column of strips.
+#   tc.legend([[c,label],...]): the strip marks with words.
+#   tc.issues(force): the shared /api/v1/admin/issues reply. Calls within 5 seconds share one request;
+#     force (or the timeclock:issues-changed event) fetches again. Nav counts and page warnings use it.
+#   tc.date(value,style): one date format. style: undefined 2026-10-29, 'day' Thu, Oct 29, 'short' Oct 29,
+#     'long' Thursday, October 29, 2026. A bare YYYY-MM-DD is read as that local date.
+#   tc.ask({title,text,ok,danger}) -> Promise<boolean>; tc.reason({title,text,label,min,value,ok,danger})
+#     -> Promise<string|null>. One in-page dialog for confirmations and required reasons (no browser popups).
 #   tc.CARD / tc.TIMEOUT: the one wording for manager-card approval prompts and timeouts.
-UI_JS = ("<script>window.tc=(function(){"
+#   tc.card(url,token): poll a manager-card status endpoint every 700 ms; resolves with the final
+#     reply, rejects with tc.TIMEOUT when it expires or after 45 polls (about 32 seconds).
+UI_JS = ("window.tc=(function(){"
          "function mark(el,cls,m){if(!el)return;el.textContent=m;el.classList.remove('is-err','is-ok');"
          "if(m){el.classList.add(cls);el.dataset.flagText=el.textContent;}else delete el.dataset.flagText;}"
          "new MutationObserver(function(list){list.forEach(function(r){var el=r.target.nodeType===1?r.target:r.target.parentElement;"
@@ -120,6 +84,9 @@ UI_JS = ("<script>window.tc=(function(){"
          "try{return await Promise.race([(async function(){var r=await fetch(url,{...options,signal:c.signal});await r.clone().arrayBuffer();return r;})(),deadline]);}"
          "catch(e){if(timedOut)throw timeoutError();throw e;}finally{clearTimeout(timer);if(parent)parent.removeEventListener('abort',cancel);}}"
          "async function api(url,options){var r=await request(url,{...options,cache:'no-store'}),j=await window.tc.json(r);if(!r.ok)throw Error(j.error||'Request failed');return j;}"
+         "async function card(url,token){for(var i=0;i<45;i++){await new Promise(function(r){setTimeout(r,700);});"
+         "var x=await api(url,{method:'POST',headers:{'Content-Type':'application/x-www-form-urlencoded'},body:new URLSearchParams({token:token})});"
+         "if(x.status==='expired')break;if(x.status!=='waiting')return x;}throw Error(window.tc.TIMEOUT);}"
 
          # Device readings that need attention: [level,label] or null. Shared by System health and Diagnostics.
          "function health(k,v){var n=Number(v),has=v!==null&&v!==undefined&&v!==''&&Number.isFinite(n);"
@@ -131,15 +98,87 @@ UI_JS = ("<script>window.tc=(function(){"
          "if(k==='queued_email')return has&&n>20?['check','Backlog']:null;"
          "if(k==='ntp_indicator')return v==='Synchronized'?null:['problem','Punches refused'];"
          "return null;}"
+         # Shift strip: one day drawn against an hour ruler. Single quotes only (embedded in C).
+         "function hm(m){m=((Math.round(m)%1440)+1440)%1440;var h=Math.floor(m/60),x=m%60;"
+         "return (h%12||12)+':'+String(x).padStart(2,'0')+(h<12?' AM':' PM');}"
+         "function hour(m){var h=((Math.round(m/60)%24)+24)%24;return (h%12||12)+(h<12?' AM':' PM');}"
+         "function strip(o){var d=document.createElement('div'),span=Math.max(1,o.to-o.from);d.className='strip';"
+         "d.setAttribute('role','img');d.setAttribute('aria-label',o.label||'');"
+         "(o.marks||[]).forEach(function(k){var x=document.createElement('span'),s=Math.max(k.s,o.from),e=k.c==='now'?s:Math.min(k.e,o.to);"
+         "if(k.c==='now'?(k.s<o.from||k.s>o.to):e<=s)return;x.className='strip-'+k.c;x.style.left=((s-o.from)/span*100)+'%';"
+         "if(k.c!=='now')x.style.width=((e-s)/span*100)+'%';if(k.t)x.title=k.t;d.append(x);});return d;}"
+         "function step(span){return span>720?180:span>420?120:60;}"
+         "function range(list,lo,hi){var a=Math.min.apply(null,list.concat([lo])),b=Math.max.apply(null,list.concat([hi])),k=step(b-a);"
+         "return [Math.max(0,Math.floor(a/k)*k),Math.min(1440,Math.ceil(b/k)*k)];}"
+         "function axis(from,to){var d=document.createElement('div'),span=Math.max(1,to-from),k=step(span);"
+         "d.className='strip-axis';d.setAttribute('aria-hidden','true');"
+         "for(var m=Math.ceil(from/k)*k;m<=to;m+=k){var x=document.createElement('span');x.textContent=hour(m);x.style.left=((m-from)/span*100)+'%';"
+         "if(m===from)x.className='is-start';else if(m===to)x.className='is-end';d.append(x);}"
+         "function fit(){var labels=Array.from(d.children);labels.forEach(function(x){x.hidden=false;});if(!d.clientWidth||!labels.length)return;"
+         "var boxes=labels.map(function(x){return x.getBoundingClientRect();}),stride=1;"
+         "for(;stride<labels.length;stride++){var right=-Infinity,ok=true;"
+         "for(var i=0;i<labels.length;i+=stride){if(boxes[i].left<right+8){ok=false;break;}right=boxes[i].right;}if(ok)break;}"
+         "labels.forEach(function(x,i){x.hidden=i%stride!==0;});}"
+         "requestAnimationFrame(fit);var observer=new ResizeObserver(function(){if(!d.isConnected){observer.disconnect();return;}fit();});observer.observe(d);"
+         "if(document.fonts)document.fonts.ready.then(fit);return d;}"
+         "function legend(items){var d=document.createElement('div');d.className='strip-legend';"
+         "items.forEach(function(it){var s=document.createElement('span'),i=document.createElement('i');i.className='strip-'+it[0];"
+         "i.setAttribute('aria-hidden','true');s.append(i,it[1]);d.append(s);});return d;}"
+         "function el(tag,text,cls){var e=document.createElement(tag);if(cls)e.className=cls;if(text!==undefined&&text!==null)e.append(text);return e;}"
+         "function date(v,style){if(v===undefined||v===null||v==='')return '';var d=v instanceof Date?v:new Date(typeof v==='string'&&v.length===10&&v[4]==='-'?v+'T12:00:00':v);"
+         "if(isNaN(d.getTime()))return String(v);var o=style==='day'?{weekday:'short',month:'short',day:'numeric'}:style==='short'?{month:'short',day:'numeric'}:"
+         "style==='long'?{weekday:'long',month:'long',day:'numeric',year:'numeric'}:undefined;return d.toLocaleDateString('en-CA',o);}"
+         "var issuesPromise=null,issuesAt=0;function issues(force){var now=Date.now();if(force||!issuesPromise||now-issuesAt>5000){issuesAt=now;"
+         "issuesPromise=api('/api/v1/admin/issues').catch(function(e){issuesPromise=null;throw e;});}return issuesPromise;}"
+         "function ask(o,input){o=o||{};return new Promise(function(resolve){var d=el('dialog',null,'tc-ask'),f=el('form'),msg=el('p'),box=null,"
+         "bar=el('div',null,'actions'),no=el('button',o.cancel||'Cancel','secondary'),yes=el('button',o.ok||'OK',o.danger?'danger':'primary'),done=false;"
+         "msg.setAttribute('role','status');no.type='button';yes.type='submit';f.append(el('h2',o.title||'Confirm'));if(o.text)f.append(el('p',o.text));"
+         "if(input){box=el('textarea');box.maxLength=o.max||240;box.rows=3;if(o.value)box.value=o.value;var l=el('label',o.label||'Reason');l.append(box);f.append(l);}"
+         "bar.append(no,yes);f.append(msg,bar);d.append(f);document.body.append(d);"
+         "function finish(v){if(done)return;done=true;d.close();d.remove();resolve(v);}"
+         "no.onclick=function(){finish(input?null:false);};d.addEventListener('cancel',function(e){e.preventDefault();finish(input?null:false);});"
+         "f.onsubmit=function(e){e.preventDefault();if(!input){finish(true);return;}var t=box.value.trim(),min=o.min||0;"
+         "if(t.length<min){mark(msg,'is-err','Enter at least '+min+' characters.');box.focus();return;}finish(t);};"
+         "d.showModal();(box||yes).focus();});}"
+         "var PAGES="+json.dumps(PAGE_MAP,separators=(',',':'))+";"+NAV_JS+
          "return{json:async function(r){var t=await r.text(),j;try{j=JSON.parse(t);}catch(e){throw Error('The clock could not complete this. Try again.');}if(!j||typeof j!=='object')throw Error('The clock could not complete this. Try again.');return j;},err:function(el,e){mark(el,'is-err',text(e));},ok:function(el,m){mark(el,'is-ok',m);},"
-         "request:request,api:api,flag:flag,banner:banner,ago:ago,health:health,"
+         "request:request,api:api,card:card,flag:flag,banner:banner,ago:ago,health:health,hm:hm,strip:strip,axis:axis,range:range,legend:legend,"
+         "date:date,issues:issues,nav:nav,ask:function(o){return ask(o,false);},reason:function(o){return ask(o,true);},pages:PAGES,"
          "time:function(s){var d=new Date(s);return isNaN(d.getTime())?String(s):d.toLocaleTimeString('en-US',{hour:'numeric',minute:'2-digit'});},"
          "datetime:function(s){var d=new Date(s);if(isNaN(d.getTime()))return String(s);return d.toLocaleString('en-CA',{weekday:'short',month:'short',day:'numeric',year:'numeric',hour:'numeric',minute:'2-digit',timeZoneName:'short',hour12:true}).replace('a.m.','AM').replace('p.m.','PM');},"
-         "CARD:'Tap your manager card on the clock within 30 seconds.',TIMEOUT:'Time ran out. Try again.'};})();</script>")
+         "CARD:'Tap your manager card on the clock within 30 seconds.',TIMEOUT:'Time ran out. Try again.'};})();")
 
 
 def c_lines(text):
     return '\n'.join(' "%s"' % l for l in text.splitlines() if l)
+
+
+def js_lines(text, width=160):
+    """Emit adjacent C literals without splitting JavaScript quoted strings.
+
+    Width is a target, not a limit: an entire JS string stays on one C line.
+    Escapes are consumed with their following character.
+    """
+    chunks = []
+    start = 0
+    quote = None
+    escaped = False
+    for i, char in enumerate(text):
+        if quote:
+            if escaped:
+                escaped = False
+            elif char == '\\':
+                escaped = True
+            elif char == quote:
+                quote = None
+        elif char in ("'", '"', '`'):
+            quote = char
+        if quote is None and char in ';},' and i + 1 - start >= width:
+            chunks.append(text[start:i + 1])
+            start = i + 1
+    if start < len(text):
+        chunks.append(text[start:])
+    return '\n'.join(' ' + json.dumps(chunk, ensure_ascii=False) for chunk in chunks)
 
 
 def main():
@@ -160,37 +199,40 @@ def main():
     nav = nav_markup()
     # Split the nav string so no C source line gets very long.
     nav_c = ' \\\n '.join('"%s"' % chunk for chunk in re.findall(r'.{1,150}(?:</a>|</details>|$)', nav) if chunk)
-    for name, js in (('NAV_JS', NAV_JS), ('UI_JS', UI_JS)):
-        if '"' in js or '\\' in js:
-            sys.exit(f'{name} must not contain double quotes or backslashes (embedded as a C string)')
+    js_c = js_lines(UI_JS)
     out = f'''/* GENERATED by tools/gen_ui_inc.py from src/ui.css and its NAV table. Do not edit; run make ui. */
 #define UI_CSS_VERSION "{version}"
 static const char ui_css[]=
 {c_lines(css_min)};
-/* Static navigation. CSS highlights the current page from <body data-page='...'>; NAV_JS adds menu behaviour. */
+/* Shared page script (tc helpers, page catalog, menu behaviour), served as /ui.js with the stylesheet's caching. */
+static const char ui_js[]=
+{js_c};
+/* Static navigation. CSS highlights the current page from <body data-page='...'>; tc.nav() adds menu behaviour. */
 #define UI_NAV "<header class='topbar'><div class='topbar-in'><a class='brand' href='/'>mk-timeclock</a><nav class='nav' aria-label='Main'>" \\
  {nav_c} \\
  "</nav><form method='post' action='/logout' class='signout'><button class='secondary'>Sign out</button></form></div></header>" \\
- "{NAV_JS}"
+ "<script>tc.nav()</script>"
 #define UI_DOC(title) "<!doctype html><html lang='en'><head><meta charset='utf-8'><meta name='viewport' content='width=device-width,initial-scale=1'>" \\
  "<meta name='color-scheme' content='light dark'><title>" title " | Timeclock</title><link rel='stylesheet' href='/ui.css?v=" UI_CSS_VERSION "'></head>"
 /* Use: UI_HEAD("Employees","employees") ... page body ... UI_FOOT */
-#define UI_JS "{UI_JS}"
+#define UI_JS "<script src='/ui.js?v=" UI_CSS_VERSION "'></script>"
 #define UI_HEAD(title,page) UI_DOC(title) "<body data-page='" page "'>" UI_JS UI_NAV "<main>"
 #define UI_HEAD_LOGIN(title) UI_DOC(title) "<body class='login'>" UI_JS "<main>"
 #define UI_FOOT "</main></body></html>"
-/* The stylesheet holds no data, so it is served before the login check (the login page uses it).
-   Cached for a week; bump UI_CSS_VERSION when ui.css or NAV changes. */
-static void send_css(int fd){{
- size_t n=sizeof ui_css-1;char h[256];
- int k=snprintf(h,sizeof h,"HTTP/1.1 200 OK\\r\\nContent-Type: text/css; charset=utf-8\\r\\nContent-Length: %zu\\r\\nCache-Control: public, max-age=604800, immutable\\r\\nX-Content-Type-Options: nosniff\\r\\nConnection: close\\r\\n\\r\\n",n);
+/* The stylesheet and shared script hold no data, so they are served before the login check (the login
+   and employee pages use them). Cached for a week; bump UI_CSS_VERSION when ui.css, NAV or UI_JS changes. */
+static void send_static(int fd,const char*type,const char*body,size_t n){{
+ char h[256];
+ int k=snprintf(h,sizeof h,"HTTP/1.1 200 OK\\r\\nContent-Type: %s\\r\\nContent-Length: %zu\\r\\nCache-Control: public, max-age=604800, immutable\\r\\nX-Content-Type-Options: nosniff\\r\\nConnection: close\\r\\n\\r\\n",type,n);
  if(k<=0||(size_t)k>=sizeof h||send(fd,h,(size_t)k,0)!=k)return;
  /* Blocking socket with the 2 s SO_SNDTIMEO set in main(); loop over partial sends. */
- for(size_t off=0;off<n;){{ssize_t w=send(fd,ui_css+off,n-off,0);if(w<=0)return;off+=(size_t)w;}}
+ for(size_t off=0;off<n;){{ssize_t w=send(fd,body+off,n-off,0);if(w<=0)return;off+=(size_t)w;}}
 }}
+static void send_css(int fd){{send_static(fd,"text/css; charset=utf-8",ui_css,sizeof ui_css-1);}}
+static void send_js(int fd){{send_static(fd,"text/javascript; charset=utf-8",ui_js,sizeof ui_js-1);}}
 '''
     open(out_path, 'w', encoding='utf-8', newline='\n').write(out)
-    print(f'{out_path}: {len(css_min)} bytes of CSS, {len(keys)} nav pages')
+    print(f'{out_path}: {len(css_min)} bytes of CSS, {len(UI_JS)} bytes of JS, {len(keys)} nav pages')
 
 
 if __name__ == '__main__':

@@ -59,13 +59,13 @@ def digest(p):
             h.update(b)
     return h.hexdigest()
 
-def share_archive(folder, archive):
+def share_archive(folder, archive, private=False):
     group = grp.getgrnam('timeclock').gr_gid
     os.chown(folder, 0, group)
     os.chmod(folder, 0o750)
     for path in (archive, Path(str(archive) + '.sha256')):
         os.chown(path, 0, group)
-        os.chmod(path, 0o640)
+        os.chmod(path, 0o600 if private else 0o640)
 
 def email_scheduled(archive, dbpath):
     """Opt-in daily archival email, independent from mailer and its retry queue."""
@@ -184,6 +184,20 @@ def confirm_services(services):
         except Exception as exc:
             raise RuntimeError(f'Restored server unreachable via loopback: {exc}') from exc
 
+def snapshot_database(source, target):
+    """SQLite online backup: coherent committed data without stopping the reader."""
+    started = time.monotonic()
+    def progress(status, remaining, total):
+        if time.monotonic() - started > 60:
+            raise RuntimeError('Local SQLite snapshot exceeded 60 seconds; retry later')
+    original = sqlite3.connect(f'file:{source}?mode=ro', uri=True, timeout=3)
+    copy = sqlite3.connect(target)
+    try:
+        original.backup(copy, pages=128, progress=progress, sleep=0.01)
+    finally:
+        copy.close()
+        original.close()
+
 def main():
     ap = argparse.ArgumentParser(description=__doc__)
     ap.add_argument('operation', choices=('backup', 'verify', 'restore', 'list'))
@@ -198,11 +212,17 @@ def main():
     a = ap.parse_args()
     if os.geteuid() != 0:
         ap.error('Must be run as root')
+    os.umask(0o077)
     data = Path(a.data).resolve()
     backups = Path(a.backups).resolve()
     if data == backups or data in backups.parents or backups in data.parents:
         ap.error('Data and backup directories must be separate')
     if a.keep < 1: ap.error('--keep must be at least 1')
+    envfile = Path('/etc/timeclock/timeclock.env')
+    local_env = dict((key,value.strip().strip("\"'")) for key,value in (line.split('=',1) for line in envfile.read_text().splitlines() if '=' in line and not line.startswith('#'))) if envfile.is_file() else {}
+    slave = local_env.get('TIMECLOCK_ROLE','').strip('"\'') == 'slave'
+    if slave and a.email_scheduled: raise ValueError('Slave backups are local only')
+    if slave and a.services is None and a.service == 'timeclock-server.service': a.services = ['timeclock-agent.service']
     services = a.services if a.services is not None else (['timeclock-mailer.service', 'timeclock-agent.service', 'timeclock-server.service'] if a.service == 'timeclock-server.service' else ([a.service] if a.service != 'none' else []))
     for name in services:
         if subprocess.check_output(['systemctl','show','--property=LoadState','--value',name], text=True).strip() != 'loaded':
@@ -220,7 +240,7 @@ def main():
     if a.operation == 'backup':
         for old in backups.glob('timeclock-*.tar.gz'):
             if old.is_file() and not old.is_symlink():
-                share_archive(backups, old) if Path(str(old)+'.sha256').is_file() and not Path(str(old)+'.sha256').is_symlink() else None
+                share_archive(backups, old, slave) if Path(str(old)+'.sha256').is_file() and not Path(str(old)+'.sha256').is_symlink() else None
     if a.operation == 'list':
         for p in sorted(backups.glob('timeclock-*.tar.gz')): print(p)
         return
@@ -230,7 +250,7 @@ def main():
         if a.operation == 'backup':
             if data.is_symlink(): raise ValueError('Data path cannot be a symlink')
             if not data.is_dir(): raise ValueError(f'Data directory missing: {data}')
-            stop_writers()
+            if not slave: stop_writers()
             try:
                 stamp = dt.datetime.now(dt.timezone.utc).strftime('%Y%m%dT%H%M%SZ')
                 target = backups / f'timeclock-{stamp}-{os.getpid()}.tar.gz'
@@ -238,24 +258,36 @@ def main():
                 try:
                     with tarfile.open(tmp, 'w:gz', dereference=False) as tf:
                         for root, dirs, files in os.walk(data, followlinks=False):
-                            dirs[:] = [x for x in dirs if not (Path(root)/x).is_symlink()]
+                            dirs[:] = [x for x in dirs if not (Path(root)/x).is_symlink() and not (slave and Path(root)==data and x=='slave-recovery')]
                             rel = Path(root).relative_to(data)
                             tf.add(root, arcname=str(Path('data') / rel), recursive=False)
                             for f in files:
                                 p = Path(root) / f
                                 if p.is_symlink() or not p.is_file():
                                     raise ValueError(f'Unsupported file: {p}')
-                                tf.add(p, arcname=str(Path('data') / rel / f), recursive=False)
+                                if slave and f.endswith(('.db-wal','.db-shm')): continue
+                                if slave and p.suffix == '.db':
+                                    with tempfile.TemporaryDirectory(prefix='.slave-snapshot-', dir=str(backups)) as stage:
+                                        snapshot = Path(stage) / f
+                                        snapshot_database(p, snapshot)
+                                        tf.add(snapshot, arcname=str(Path('data') / rel / f), recursive=False)
+                                else:
+                                    tf.add(p, arcname=str(Path('data') / rel / f), recursive=False)
+                        if slave:
+                            for name in ('timeclock.env','adopted','role-selected'):
+                                config = Path('/etc/timeclock') / name
+                                if config.is_symlink(): raise ValueError('Unsafe recovery configuration')
+                                if config.is_file(): tf.add(config, arcname='data/slave-recovery/'+name, recursive=False)
                     archive_check(tmp)
                     os.replace(tmp, target)
                     side = Path(str(target) + '.sha256')
                     side.write_text(digest(target) + '  ' + target.name + '\n')
-                    share_archive(backups, target)
+                    share_archive(backups, target, slave)
                     prune(backups, a.keep)
                     print(target)
                 finally: tmp.unlink(missing_ok=True)
             finally:
-                start_writers()
+                if not slave: start_writers()
             if a.email_scheduled:
                 email_scheduled(target, data / "server.db")
             return
@@ -287,6 +319,17 @@ def main():
                 with tarfile.open(archive, 'r:gz') as tf:
                     tf.extractall(staging, filter='data')
                 if not staged.is_dir(): raise ValueError('Invalid staging directory')
+                if not slave and (staged/'slave-recovery'/'timeclock.env').is_file():
+                    raise ValueError('Cannot restore a Slave archive onto a Primary')
+                if slave:
+                    if (staged/'server.db').exists(): raise ValueError('Cannot restore a Primary database onto a Slave')
+                    queue = staged/'queue.db'
+                    if not queue.is_file(): raise ValueError('Slave archive has no queue database')
+                    conn = sqlite3.connect(f'file:{queue}?mode=ro', uri=True)
+                    try:
+                        clocks = {row[0] for row in conn.execute('SELECT DISTINCT clock_id FROM pending')}
+                        if clocks - {local_env.get('CLOCK_ID','')}: raise ValueError('Archive contains pending punches for another clock')
+                    finally: conn.close()
                 # tarfile filter=data strips ownership. Restore install.sh account and mode.
                 for root, dirs, files in os.walk(staged, followlinks=False):
                     for name in dirs + files:

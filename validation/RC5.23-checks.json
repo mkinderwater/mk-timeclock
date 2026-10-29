@@ -1,0 +1,31 @@
+{
+  "passed": 6,
+  "total": 6,
+  "full_suite_repeated": false,
+  "results": [
+    {
+      "script": "test_rc523_setup_recovery.py",
+      "passed": true
+    },
+    {
+      "script": "test_rc518_setup_style.py",
+      "passed": true
+    },
+    {
+      "script": "test_rc519_adoption_form.py",
+      "passed": true
+    },
+    {
+      "script": "test_rc515_installer_roles.py",
+      "passed": true
+    },
+    {
+      "script": "test_lite_installer_manifest.py",
+      "passed": true
+    },
+    {
+      "script": "test_cleanup37_version.py",
+      "passed": true
+    }
+  ]
+}

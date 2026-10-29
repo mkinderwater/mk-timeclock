@@ -1,0 +1,8 @@
+[Unit]
+Description=mk-timeclock Local Slave Backup
+After=local-fs.target
+ConditionPathExists=/etc/timeclock/adopted
+[Service]
+Type=oneshot
+ExecStart=/opt/icubedev-timeclock/bin/timeclock-backup backup --services timeclock-agent.service
+UMask=0077
